@@ -28,24 +28,6 @@ export interface NetworkConfig {
 
 // ─── Address Validation ────────────────────────────────────────────────────────
 
-const STELLAR_ADDRESS_PREFIX = 'G'
-const STELLAR_ADDRESS_LENGTH = 56
-
-/**
- * Returns `true` when `address` has the shape of a valid Stellar public key
- * (starts with `'G'` and is 56 characters long after trimming whitespace).
- *
- * This is a lightweight structural check only — it does not verify the
- * base-32 checksum. Use it to give instant feedback in form fields before
- * attempting an on-chain operation.
- */
-export function isValidStellarAddressShape(address: string): boolean {
-  return (
-    address.trim().startsWith(STELLAR_ADDRESS_PREFIX) &&
-    address.trim().length === STELLAR_ADDRESS_LENGTH
-  )
-}
-
 /**
  * Returns `true` when `address` is a structurally and checksum-valid
  * Stellar Ed25519 public key (starts with `'G'`).
@@ -157,22 +139,6 @@ export const KNOWN_TOKENS = [...NETWORKS.testnet.knownTokens, ...NETWORKS.mainne
 export const NETWORK: NetworkName =
   (process.env.NEXT_PUBLIC_STELLAR_NETWORK as NetworkName | undefined) ?? 'testnet'
 
-/**
- * The FlowStar streaming contract ID for the active {@link NETWORK}.
- *
- * Resolved at module load time from:
- * - `NEXT_PUBLIC_STREAM_CONTRACT_ID_MAINNET` when `NETWORK === 'mainnet'`
- * - `NEXT_PUBLIC_STREAM_CONTRACT_ID_TESTNET` otherwise
- *
- * An empty string here means the contract ID was not configured and the app
- * will operate in mock mode — all contract calls are simulated against the
- * in-memory store in `lib/mock-data.ts`.
- */
-export const STREAM_CONTRACT_ID =
-  NETWORK === 'mainnet'
-    ? (process.env.NEXT_PUBLIC_STREAM_CONTRACT_ID_MAINNET ?? '')
-    : (process.env.NEXT_PUBLIC_STREAM_CONTRACT_ID_TESTNET ?? '')
-
 const CUSTOM_TOKENS_KEY = 'flowstar:custom-tokens'
 const FAVORITE_TOKENS_KEY = 'flowstar:favorite-tokens'
 
@@ -212,17 +178,6 @@ export function isVerifiedToken(address: string): boolean {
   return KNOWN_TOKENS.some((t) => t.address === address)
 }
 
-/**
- * Looks up a token in the lazily-loaded verified-token list (`/lib/tokens.json`).
- * Returns the full `VerifiedTokenEntry` if found, or `null` if the cache
- * has not been populated yet (call `loadVerifiedTokens()` first) or the address
- * is not in the list.
- */
-export function getVerifiedTokenInfo(address: string): VerifiedTokenEntry | null {
-  const entry = verifiedTokensCache?.find((t) => t.address === address)
-  return entry || null
-}
-
 // ─── Custom Tokens ────────────────────────────────────────────────────────────
 
 const CUSTOM_TOKENS_KEY_PREFIX = 'flowstar:custom-tokens:'
@@ -256,15 +211,6 @@ export function saveCustomToken(
   const existing = getCustomTokens(network)
   if (existing.some((t) => t.address === token.address)) return
   const updated = [token, ...existing].slice(0, 10)
-  localStorage.setItem(`${CUSTOM_TOKENS_KEY_PREFIX}${network}`, JSON.stringify(updated))
-}
-
-/**
- * Removes a previously saved custom token (identified by `address`) for
- * `network` from `localStorage`. No-ops if the address is not found.
- */
-export function removeCustomToken(network: NetworkName, address: string) {
-  const updated = getCustomTokens(network).filter((t) => t.address !== address)
   localStorage.setItem(`${CUSTOM_TOKENS_KEY_PREFIX}${network}`, JSON.stringify(updated))
 }
 

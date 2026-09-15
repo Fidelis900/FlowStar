@@ -51,10 +51,6 @@ export function getHiddenStreamIds(): Set<string> {
   return readSet(HIDDEN_STREAMS_KEY)
 }
 
-export function isStreamHidden(id: string): boolean {
-  return getHiddenStreamIds().has(id)
-}
-
 export function hideStream(id: string) {
   const ids = getHiddenStreamIds()
   if (ids.has(id)) return
@@ -73,10 +69,6 @@ export function unhideStream(id: string) {
 
 export function getBlockedSenders(): Set<string> {
   return readSet(BLOCKED_SENDERS_KEY)
-}
-
-export function isSenderBlocked(address: string): boolean {
-  return getBlockedSenders().has(address)
 }
 
 export function blockSender(address: string) {

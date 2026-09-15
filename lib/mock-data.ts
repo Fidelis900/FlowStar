@@ -16,7 +16,6 @@ const XLM = KNOWN_TOKENS[0]
 const USDC = KNOWN_TOKENS[1]
 const EURC = KNOWN_TOKENS[2]
 
-const DEMO_ME = 'GBDEMO7KFY3R4VZ6N5LJ7WQH3M2PD8C9SAUVW4EXAMPLE0WALLET0DEM'
 export const DEMO_ADDRESS = 'GBQ2X7KFY3R4VZ6N5LJ7WQH3M2PD8C9SAUTV4EXAMPLE0WALLET00ADDR'
 
 const now = Math.floor(Date.now() / 1000)
@@ -171,5 +170,3 @@ export const mockStore = {
     emit()
   },
 }
-
-export { DEMO_ME }
