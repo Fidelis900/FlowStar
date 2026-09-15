@@ -195,6 +195,9 @@ export const WithCustomClass: Story = {
  * Multiple progress bars showing progression
  */
 export const ProgressionSequence: Story = {
+  args: {
+    value: 0,
+  },
   render: () => (
     <div className="space-y-6 w-full max-w-md">
       <div>
@@ -225,6 +228,9 @@ export const ProgressionSequence: Story = {
  * All size variants together
  */
 export const AllSizeVariants: Story = {
+  args: {
+    value: 0,
+  },
   render: () => (
     <div className="space-y-6 w-full max-w-md">
       <div>

@@ -58,7 +58,9 @@ function TestSelect({
     <Select
       value={value}
       defaultValue={defaultValue}
-      onValueChange={onValueChange}
+      onValueChange={(v) => {
+        if (v !== null) onValueChange?.(v)
+      }}
       disabled={disabled}
     >
       <SelectTrigger aria-label="test-select">
@@ -87,7 +89,7 @@ describe('placeholder', () => {
   it('marks the trigger with data-placeholder when no value is selected', () => {
     render(<TestSelect />)
 
-    const trigger = screen.getByRole('button', { name: 'test-select' })
+    const trigger = screen.getByRole('combobox', { name: 'test-select' })
 
     // base-ui sets data-placeholder on the trigger element when the select
     // has no value — this is what drives the muted text-color in the CSS.
@@ -97,7 +99,7 @@ describe('placeholder', () => {
   it('does not show data-placeholder once a value is set via defaultValue', () => {
     render(<TestSelect defaultValue="apple" />)
 
-    const trigger = screen.getByRole('button', { name: 'test-select' })
+    const trigger = screen.getByRole('combobox', { name: 'test-select' })
     expect(trigger).not.toHaveAttribute('data-placeholder')
   })
 
@@ -118,7 +120,7 @@ describe('value selection', () => {
     render(<TestSelect onValueChange={onValueChange} />)
 
     // Open the popup
-    await user.click(screen.getByRole('button', { name: 'test-select' }))
+    await user.click(screen.getByRole('combobox', { name: 'test-select' }))
 
     // The popup is portalled into document.body — query from there
     const listbox = await screen.findByRole('listbox')
@@ -135,11 +137,9 @@ describe('value selection', () => {
       currentValue = v
     })
 
-    const { rerender } = render(
-      <TestSelect value={currentValue} onValueChange={onValueChange} />,
-    )
+    const { rerender } = render(<TestSelect value={currentValue} onValueChange={onValueChange} />)
 
-    const trigger = screen.getByRole('button', { name: 'test-select' })
+    const trigger = screen.getByRole('combobox', { name: 'test-select' })
     expect(trigger).toHaveAttribute('data-placeholder')
 
     // Open and select
@@ -161,18 +161,16 @@ describe('value selection', () => {
       currentValue = v
     })
 
-    const { rerender } = render(
-      <TestSelect value={currentValue} onValueChange={onValueChange} />,
-    )
+    const { rerender } = render(<TestSelect value={currentValue} onValueChange={onValueChange} />)
 
-    await user.click(screen.getByRole('button', { name: 'test-select' }))
+    await user.click(screen.getByRole('combobox', { name: 'test-select' }))
     const listbox = await screen.findByRole('listbox')
     await user.click(within(listbox).getByText('Banana'))
 
     rerender(<TestSelect value={currentValue} onValueChange={onValueChange} />)
 
     // The trigger should now display the chosen item's label
-    expect(screen.getByRole('button', { name: 'test-select' })).toHaveTextContent('Banana')
+    expect(screen.getByRole('combobox', { name: 'test-select' })).toHaveTextContent('Banana')
   })
 })
 
@@ -182,14 +180,14 @@ describe('disabled state', () => {
   it('renders the trigger with the disabled attribute when the select is disabled', () => {
     render(<TestSelect disabled />)
 
-    const trigger = screen.getByRole('button', { name: 'test-select' })
+    const trigger = screen.getByRole('combobox', { name: 'test-select' })
     expect(trigger).toBeDisabled()
   })
 
   it('marks the trigger with data-disabled when disabled', () => {
     render(<TestSelect disabled />)
 
-    const trigger = screen.getByRole('button', { name: 'test-select' })
+    const trigger = screen.getByRole('combobox', { name: 'test-select' })
     expect(trigger).toHaveAttribute('data-disabled')
   })
 
@@ -198,7 +196,7 @@ describe('disabled state', () => {
 
     render(<TestSelect disabled />)
 
-    await user.click(screen.getByRole('button', { name: 'test-select' }))
+    await user.click(screen.getByRole('combobox', { name: 'test-select' }))
 
     // No listbox should appear in the document after clicking a disabled trigger
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
@@ -210,7 +208,7 @@ describe('disabled state', () => {
 
     render(<TestSelect disabled onValueChange={onValueChange} />)
 
-    await user.click(screen.getByRole('button', { name: 'test-select' }))
+    await user.click(screen.getByRole('combobox', { name: 'test-select' }))
 
     expect(onValueChange).not.toHaveBeenCalled()
   })

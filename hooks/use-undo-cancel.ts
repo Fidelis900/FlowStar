@@ -23,12 +23,7 @@ function setCancelling(id: string, value: boolean) {
   if (changed) listeners.forEach((l) => l())
 }
 
-/** Whether a stream currently has a pending (undoable) cancellation in flight. */
-export function isStreamCancelling(id: string): boolean {
-  return cancellingIds.has(id)
-}
-
-/** Reactive hook mirroring {@link isStreamCancelling} for a given stream id. */
+/** Reactive hook: whether a stream currently has a pending (undoable) cancellation in flight. */
 export function useIsStreamCancelling(id: string): boolean {
   const [cancelling, setLocal] = useState(() => cancellingIds.has(id))
   useEffect(() => {
@@ -86,7 +81,7 @@ export function useUndoableCancel(delayMs: number = CANCEL_UNDO_DELAY_MS) {
       })
       pendingRef.current.clear()
     }
-  }, []);
+  }, [])
 
   const scheduleCancel = useCallback(
     (streamId: string) => {

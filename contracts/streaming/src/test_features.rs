@@ -6,7 +6,7 @@ use super::*;
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token::{Client as TokenClient, StellarAssetClient},
-    vec, Address, Env,
+    Address, Env,
 };
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -371,7 +371,7 @@ fn test_only_admin_can_pause() {
     let client = t.client();
     client.initialize(&t.sender);
 
-    let other = Address::generate(&t.env);
+    let _other = Address::generate(&t.env);
 
     // Non-admin should not be able to pause
     // This test assumes mock_all_auths is set; otherwise auth will fail
@@ -394,7 +394,7 @@ fn test_only_admin_can_unpause() {
     // Only admin can unpause
     client.unpause();
 
-    let stream = client.get_stream(&1u64);
+    let _stream = client.get_stream(&1u64);
     // Operations should work again now that the contract is unpaused.
     t.token().approve(
         &t.sender,
