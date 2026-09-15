@@ -80,7 +80,7 @@ function saveHistory(history: WebhookDelivery[]): boolean {
 async function deliverWithRetry(
   url: string,
   payload: WebhookPayload,
-  retries = 3
+  retries = 3,
 ): Promise<{ statusCode: number | null; success: boolean }> {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -127,39 +127,48 @@ export function useWebhooks(onSaveError?: () => void) {
     setHistory(loadHistory())
   }, [])
 
-  const addWebhook = useCallback((url: string, events: WebhookEventType[]) => {
-    const hook: WebhookConfig = {
-      id: crypto.randomUUID(),
-      url,
-      events,
-      enabled: true,
-      createdAt: Date.now(),
-    }
-    setWebhooks((prev) => {
-      const next = [...prev, hook]
-      reportSaveResult(saveWebhooks(next))
-      return next
-    })
-  }, [reportSaveResult])
+  const addWebhook = useCallback(
+    (url: string, events: WebhookEventType[]) => {
+      const hook: WebhookConfig = {
+        id: crypto.randomUUID(),
+        url,
+        events,
+        enabled: true,
+        createdAt: Date.now(),
+      }
+      setWebhooks((prev) => {
+        const next = [...prev, hook]
+        reportSaveResult(saveWebhooks(next))
+        return next
+      })
+    },
+    [reportSaveResult],
+  )
 
-  const removeWebhook = useCallback((id: string) => {
-    setWebhooks((prev) => {
-      const next = prev.filter((h) => h.id !== id)
-      reportSaveResult(saveWebhooks(next))
-      return next
-    })
-  }, [reportSaveResult])
+  const removeWebhook = useCallback(
+    (id: string) => {
+      setWebhooks((prev) => {
+        const next = prev.filter((h) => h.id !== id)
+        reportSaveResult(saveWebhooks(next))
+        return next
+      })
+    },
+    [reportSaveResult],
+  )
 
-  const toggleWebhook = useCallback((id: string) => {
-    setWebhooks((prev) => {
-      const next = prev.map((h) => (h.id === id ? { ...h, enabled: !h.enabled } : h))
-      reportSaveResult(saveWebhooks(next))
-      return next
-    })
-  }, [reportSaveResult])
+  const toggleWebhook = useCallback(
+    (id: string) => {
+      setWebhooks((prev) => {
+        const next = prev.map((h) => (h.id === id ? { ...h, enabled: !h.enabled } : h))
+        reportSaveResult(saveWebhooks(next))
+        return next
+      })
+    },
+    [reportSaveResult],
+  )
 
   const fireEvent = useCallback(
-    async (eventType: WebhookEventType, data: WebhookPayload) => {
+    async (eventType: WebhookEventType, data: Record<string, unknown>) => {
       const active = webhooks.filter((h) => h.enabled && h.events.includes(eventType))
       for (const hook of active) {
         const payload = { event: eventType, timestamp: new Date().toISOString(), data }
@@ -178,20 +187,23 @@ export function useWebhooks(onSaveError?: () => void) {
         })
       }
     },
-    [webhooks, reportSaveResult]
+    [webhooks, reportSaveResult],
   )
 
-  const testWebhook = useCallback(async (id: string): Promise<boolean> => {
-    const hook = webhooks.find((h) => h.id === id)
-    if (!hook) return false
-    const payload = {
-      event: 'stream.created',
-      timestamp: new Date().toISOString(),
-      data: { stream_id: 0, note: 'FlowStar webhook test' },
-    }
-    const result = await deliverWithRetry(hook.url, payload, 1)
-    return result.success
-  }, [webhooks])
+  const testWebhook = useCallback(
+    async (id: string): Promise<boolean> => {
+      const hook = webhooks.find((h) => h.id === id)
+      if (!hook) return false
+      const payload = {
+        event: 'stream.created',
+        timestamp: new Date().toISOString(),
+        data: { stream_id: 0, note: 'FlowStar webhook test' },
+      }
+      const result = await deliverWithRetry(hook.url, payload, 1)
+      return result.success
+    },
+    [webhooks],
+  )
 
   return { webhooks, history, addWebhook, removeWebhook, toggleWebhook, fireEvent, testWebhook }
 }

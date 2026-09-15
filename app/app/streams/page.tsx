@@ -48,13 +48,7 @@ const TOKEN_OPTIONS = ['all', 'XLM', 'USDC', 'EURC'] as const
 // terminal (cancelled, or fully withdrawn past end_time) so none of the
 // active-stream actions (withdraw/cancel/select) apply — just the option to
 // permanently clean them up via cleanup_stream().
-function ArchivedStreamRow({
-  streamId,
-  onRemoved,
-}: {
-  streamId: string
-  onRemoved: () => void
-}) {
+function ArchivedStreamRow({ streamId, onRemoved }: { streamId: string; onRemoved: () => void }) {
   const { cleanup, pending } = useContract()
   const [confirming, setConfirming] = useState(false)
 
@@ -173,8 +167,7 @@ function StreamsPage() {
 
   const hasFilters = search || statusFilter !== 'all' || tokenFilter !== 'all'
 
-  const { selected, selectedItems, allSelected, toggle, toggleAll, clear } =
-    useBulkSelect(filtered)
+  const { selected, selectedItems, allSelected, toggle, toggleAll, clear } = useBulkSelect(filtered)
 
   const {
     status: bulkStatus,
@@ -225,7 +218,9 @@ function StreamsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Streams</h1>
-            <p className="text-muted-foreground text-sm">All streams you&#39;ve sent or received.</p>
+            <p className="text-muted-foreground text-sm">
+              All streams you&#39;ve sent or received.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {/* Tab re-focus refreshing indicator */}
@@ -299,7 +294,9 @@ function StreamsPage() {
                   aria-label="List view"
                   className={
                     'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ' +
-                    (view === 'list' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')
+                    (view === 'list'
+                      ? 'bg-secondary text-foreground'
+                      : 'text-muted-foreground hover:text-foreground')
                   }
                 >
                   <LayoutList className="size-3.5" />
@@ -312,7 +309,9 @@ function StreamsPage() {
                   aria-label="Timeline view"
                   className={
                     'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ' +
-                    (view === 'timeline' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')
+                    (view === 'timeline'
+                      ? 'bg-secondary text-foreground'
+                      : 'text-muted-foreground hover:text-foreground')
                   }
                 >
                   <GanttChartSquare className="size-3.5" />
@@ -328,7 +327,9 @@ function StreamsPage() {
               >
                 {showHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 <span className="hidden sm:inline">
-                  {showHidden ? 'Showing hidden' : `Hidden${hiddenCount > 0 ? ` (${hiddenCount})` : ''}`}
+                  {showHidden
+                    ? 'Showing hidden'
+                    : `Hidden${hiddenCount > 0 ? ` (${hiddenCount})` : ''}`}
                 </span>
               </Button>
             </div>
@@ -364,12 +365,15 @@ function StreamsPage() {
             {/* Bulk action bar */}
             {selectMode && selected.size > 0 && (
               <div className="bg-muted flex flex-wrap items-center gap-2 rounded-lg p-3">
-                <span className="text-sm font-medium">{selected.size} selected</span>
+                <span className="text-sm font-medium" data-testid="bulk-selected-count">
+                  {selected.size} selected
+                </span>
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={isBulkRunning || eligibleWithdrawIds.length === 0}
                   onClick={handleBulkWithdraw}
+                  data-testid="bulk-withdraw-button"
                 >
                   <ArrowDownToLine className="mr-2 h-4 w-4" />
                   Withdraw ({eligibleWithdrawIds.length})
@@ -379,6 +383,7 @@ function StreamsPage() {
                   variant="outline"
                   disabled={isBulkRunning || eligibleCancelIds.length === 0}
                   onClick={handleBulkCancel}
+                  data-testid="bulk-cancel-button"
                 >
                   <Ban className="mr-2 h-4 w-4" />
                   Cancel ({eligibleCancelIds.length})
@@ -392,7 +397,10 @@ function StreamsPage() {
 
             {/* Bulk action results */}
             {showBulkResults && (
-              <div className="bg-muted flex items-center justify-between rounded-lg p-3 text-sm">
+              <div
+                className="bg-muted flex items-center justify-between rounded-lg p-3 text-sm"
+                data-testid="bulk-results"
+              >
                 <span>
                   {succeeded} succeeded, {failed} failed
                 </span>

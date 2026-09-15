@@ -1,8 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Plus, ArrowDownToLine, RefreshCw } from 'lucide-react'
-import { Plus, ArrowDownToLine, WifiOff } from 'lucide-react'
+import { Plus, ArrowDownToLine, RefreshCw, WifiOff } from 'lucide-react'
 import { RequireWallet } from '@/components/layout/require-wallet'
 import { TestnetFaucetBanner } from '@/components/layout/testnet-faucet-banner'
 import { DashboardStats, DashboardStatsSkeleton } from '@/components/streams/dashboard-stats'
@@ -21,14 +20,15 @@ import { getWithdrawableAmount } from '@/lib/stream-utils'
 import type { StreamData } from '@/types/stream'
 
 export function Dashboard() {
-  const { sent, received, all, loading, isRefreshingAfterHidden } = useStreams()
-  const { withdrawAll, pending } = useContract()
-  const now = useNow(1000)
-  const [withdrawProgress, setWithdrawProgress] = useState<{
-    current: number
-    total: number
-  } | null>(null)
-  const { sent, received: allReceived, all: allStreams, loading, stale, lastUpdated } = useStreams()
+  const {
+    sent,
+    received: allReceived,
+    all: allStreams,
+    loading,
+    isRefreshingAfterHidden,
+    stale,
+    lastUpdated,
+  } = useStreams()
   const { withdrawAll, pending } = useContract()
   const now = useNow(1000)
   const { hiddenIds, blockedSenders } = useHiddenStreams()
@@ -38,7 +38,10 @@ export function Dashboard() {
   const isVisible = (s: StreamData) => !hiddenIds.has(s.id) && !blockedSenders.has(s.sender)
   const received = allReceived.filter(isVisible)
   const all = allStreams.filter(isVisible)
-  const [withdrawProgress, setWithdrawProgress] = useState<{ current: number; total: number } | null>(null)
+  const [withdrawProgress, setWithdrawProgress] = useState<{
+    current: number
+    total: number
+  } | null>(null)
 
   const withdrawableStreams = received.filter((s) => getWithdrawableAmount(s, now) > 0n)
   const isWithdrawingAll = withdrawProgress !== null
@@ -108,27 +111,29 @@ export function Dashboard() {
 
         {/* Testnet faucet banner */}
         <TestnetFaucetBanner />
-      {/* Offline / stale-data banner */}
-      {stale && (
-        <div
-          role="status"
-          className="flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400"
-        >
-          <WifiOff className="size-4 shrink-0" />
-          <span>
-            You&apos;re offline — showing cached stream data
-            {lastUpdated && ` from ${new Date(lastUpdated).toLocaleString()}`}. It may be
-            outdated.
-          </span>
-        </div>
-      )}
 
-      {/* Testnet faucet banner */}
-      <TestnetFaucetBanner />
+        {/* Offline / stale-data banner */}
+        {stale && (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400"
+          >
+            <WifiOff className="size-4 shrink-0" />
+            <span>
+              You&apos;re offline — showing cached stream data
+              {lastUpdated && ` from ${new Date(lastUpdated).toLocaleString()}`}. It may be
+              outdated.
+            </span>
+          </div>
+        )}
 
         {/* Stats */}
         <SectionErrorBoundary>
-          {loading ? <DashboardStatsSkeleton /> : <DashboardStats streams={all} />}
+          {loading ? (
+            <DashboardStatsSkeleton />
+          ) : (
+            <DashboardStats sent={sent} received={received} />
+          )}
         </SectionErrorBoundary>
 
         {/* Stream list */}

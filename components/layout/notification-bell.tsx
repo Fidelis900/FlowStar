@@ -9,12 +9,10 @@ import { useNotifications, type AppNotification } from '@/hooks/use-notification
 function NotificationItem({
   notification,
   onDismiss,
-}: {
-  notification: AppNotification
-  onDismiss: (id: string) => void
   itemRef,
 }: {
   notification: AppNotification
+  onDismiss: (id: string) => void
   itemRef?: (el: HTMLDivElement | null) => void
 }) {
   return (
@@ -30,9 +28,7 @@ function NotificationItem({
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium">{notification.title}</p>
         <div className="flex shrink-0 items-center gap-1.5 mt-0.5">
-          {!notification.read && (
-            <span className="size-2 rounded-full bg-primary" />
-          )}
+          {!notification.read && <span className="size-2 rounded-full bg-primary" />}
           <button
             onClick={() => onDismiss(notification.id)}
             aria-label="Dismiss notification"
@@ -50,7 +46,8 @@ function NotificationItem({
 
 export function NotificationBell() {
   const { address } = useWallet()
-  const { notifications, unreadCount, markAllRead, clearAll, dismissNotification } = useNotifications(address)
+  const { notifications, unreadCount, markAllRead, clearAll, dismissNotification } =
+    useNotifications(address)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const ref = useRef<HTMLDivElement>(null)
@@ -164,12 +161,11 @@ export function NotificationBell() {
                 No notifications yet
               </p>
             ) : (
-              notifications.map((n) => (
-                <NotificationItem key={n.id} notification={n} onDismiss={dismissNotification} />
               notifications.map((n, idx) => (
                 <NotificationItem
                   key={n.id}
                   notification={n}
+                  onDismiss={dismissNotification}
                   itemRef={(el) => {
                     itemRefs.current[idx] = el
                   }}
