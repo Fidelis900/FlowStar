@@ -6,7 +6,7 @@ async function withWallet(page: Page) {
     localStorage.setItem('walletId', 'xbull')
     ;(window as any).xBullSDK = {
       connect: async () => ({
-        publicKey: 'GBQTESTWALLETADDRESS000000000000000000000000000000000000',
+        publicKey: 'GA4M5Y74MXREPXU6LGRR7WOC6VLXJBLKJHZBJGDBKOFIP7GBM3MHF3G5',
       }),
       signXDR: async () => 'AAAAAgAAAAA...dummy-signature...',
     }
@@ -21,8 +21,8 @@ function csvFile(name: string, content: string) {
   }
 }
 
-const RECIPIENT_A = 'GBQTESTWALLETADDRESS000000000000000000000000000000000000'
-const RECIPIENT_B = 'GBQTESTWALLETADDRESS000000000000000000000000000000000001'
+const RECIPIENT_A = 'GA4M5Y74MXREPXU6LGRR7WOC6VLXJBLKJHZBJGDBKOFIP7GBM3MHF3G5'
+const RECIPIENT_B = 'GBDQ4BW2OFH65L62HPK7CGYDIP35NXDW2I7X3RS3FEDJTTIYN7WN2AGR'
 
 test.describe('Batch create — CSV upload flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -129,7 +129,7 @@ test.describe('Batch create — CSV upload flow', () => {
 
     await expect(page.locator('text=2 / 2 completed')).toBeVisible()
     await expect(page.locator('text=Batch create completed')).toBeVisible()
-    await expect(page.locator('text=2 streams created successfully.')).toBeVisible()
+    await expect(page.getByText('2 streams created successfully.', { exact: true })).toBeVisible()
     await expect(executeButton).toBeEnabled()
   })
 

@@ -39,7 +39,7 @@ jobs:
       - run: npm install --legacy-peer-deps
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Build app in mock mode
         run: npm run build
