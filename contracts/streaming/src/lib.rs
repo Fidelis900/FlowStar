@@ -175,7 +175,6 @@ pub struct CreateStreamParams {
     pub cliff_amount: i128,
 }
 
-
 // ─── Errors ──────────────────────────────────────────────────────────────────
 
 #[contracterror]

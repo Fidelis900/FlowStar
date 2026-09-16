@@ -162,7 +162,7 @@ fn bench_withdraw() {
     });
 
     // Withdraw at 100% (full)
-    let sid2 = b.create_default(now);
+    let sid2 = b.create_default(b.env.ledger().timestamp());
     b.set_time(now + 2000);
     let full = b.client().get_withdrawable(&sid2);
     measure(&b.env, "withdraw (100% — full stream)", || {
@@ -182,13 +182,13 @@ fn bench_cancel() {
         b.client().cancel(&sid_early);
     });
 
-    let sid_mid = b.create_default(now);
+    let sid_mid = b.create_default(b.env.ledger().timestamp());
     b.set_time(now + 500); // 50% in
     measure(&b.env, "cancel (50% progress)", || {
         b.client().cancel(&sid_mid);
     });
 
-    let sid_late = b.create_default(now);
+    let sid_late = b.create_default(b.env.ledger().timestamp());
     b.set_time(now + 990); // 99% in
     measure(&b.env, "cancel (99% progress)", || {
         b.client().cancel(&sid_late);

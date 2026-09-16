@@ -285,37 +285,6 @@ fn test_batch_partial_failure_rejected_atomically() {
 }
 
 #[test]
-fn test_batch_accepts_past_start_and_cliff_times() {
-    let t = TestEnv::setup();
-    let now = 1_000_000u64;
-    t.set_time(now);
-
-    let r1 = Address::generate(&t.env);
-    let per_stream = 1_000_0000000i128;
-    t.approve(per_stream);
-
-    let mut inputs: Vec<CreateStreamParams> = Vec::new(&t.env);
-    inputs.push_back(CreateStreamParams {
-        recipient: r1,
-        token: t.token_id.clone(),
-        total_amount: per_stream,
-        start_time: now - 1000,
-        end_time: now + 1000,
-        cliff_time: now - 500,
-        cliff_amount: 0,
-    });
-
-    let client = t.client();
-    let ids = client.create_streams_batch(&t.sender, &inputs);
-    assert_eq!(ids.len(), 1);
-
-    let stream = client.get_stream(&ids.get(0).unwrap());
-    assert_eq!(stream.start_time, now - 1000);
-    assert_eq!(stream.cliff_time, now - 500);
-    assert_eq!(stream.end_time, now + 1000);
-}
-
-#[test]
 fn test_batch_invalid_time_range_fails() {
     let t = TestEnv::setup();
     let now = 1_000_000u64;
@@ -414,7 +383,10 @@ fn test_batch_rejects_past_start_time() {
 
     // Atomicity: the valid first stream must not have been created and no
     // funds may have moved.
-    assert_eq!(t.client().get_sent_streams(&t.sender, &0u32, &100u32).len(), 0);
+    assert_eq!(
+        t.client().get_sent_streams(&t.sender, &0u32, &100u32).len(),
+        0
+    );
     assert_eq!(t.token().balance(&t.contract_id), 0);
 }
 

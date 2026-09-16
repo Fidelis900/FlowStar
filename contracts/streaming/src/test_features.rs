@@ -394,7 +394,6 @@ fn test_only_admin_can_unpause() {
     // Only admin can unpause
     client.unpause();
 
-    let _stream = client.get_stream(&1u64);
     // Operations should work again now that the contract is unpaused.
     t.token().approve(
         &t.sender,
