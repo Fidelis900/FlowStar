@@ -92,3 +92,34 @@ export function downloadCSV(csv: string, filename: string): void {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+/** Download a JSON-serializable value as a `.json` file in the browser. */
+export function downloadJSON(data: unknown, filename: string): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Convert webhook delivery history to CSV (webhook ID, event, status, timestamp, success). */
+export function webhookHistoryToCSV(
+  history: { webhookId: string; eventType: string; statusCode: number | null; deliveredAt: number; success: boolean }[],
+): string {
+  const headers = ['Webhook ID', 'Event Type', 'Status Code', 'Delivered At', 'Success']
+  const lines = [row(headers)]
+  for (const d of history) {
+    lines.push(
+      row([
+        d.webhookId,
+        d.eventType,
+        d.statusCode === null ? '' : String(d.statusCode),
+        new Date(d.deliveredAt).toISOString(),
+        d.success ? 'true' : 'false',
+      ]),
+    )
+  }
+  return lines.join('\n')
+}
