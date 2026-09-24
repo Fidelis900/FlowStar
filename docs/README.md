@@ -8,6 +8,7 @@ Complete documentation for the FlowStar payment streaming smart contract.
 - **[API Reference](./api-reference.md)** - Complete function reference with parameters, returns, and gas costs
 - **[Integration Guide](./integration-guide.md)** - Step-by-step guide with 5 practical examples
 - **[CLI Examples](./cli-examples.md)** - Command-line interface examples for contract interaction
+- **[Webhooks](./WEBHOOKS.md)** - Webhook payload format and schema versioning policy
 
 ---
 
@@ -144,24 +145,24 @@ Airdrop tokens over 30 days
 
 All write operations require authorization from a specific account:
 
-| Operation | Requires |
-|-----------|----------|
-| `initialize()` | `admin` must authorize |
-| `pause()` | Stored admin must authorize |
-| `unpause()` | Stored admin must authorize |
-| `upgrade()` | `admin` param must authorize and match stored admin |
-| `migrate()` | Stored admin must authorize |
-| `create_stream()` | Sender must authorize |
-| `create_streams_batch()` | Sender must authorize |
-| `withdraw()` | Recipient (or registered delegate) must authorize |
-| `cancel()` | Sender must authorize |
-| `transfer_stream()` | Current recipient must authorize |
-| `top_up()` | Sender must authorize |
-| `bump_stream()` | No authorization required |
-| `cleanup_stream()` | Sender or recipient must authorize |
-| `update_stream_metadata()` | Sender must authorize |
-| `set_delegate()` | Recipient must authorize |
-| `remove_delegate()` | Recipient must authorize |
+| Operation                  | Requires                                            |
+| -------------------------- | --------------------------------------------------- |
+| `initialize()`             | `admin` must authorize                              |
+| `pause()`                  | Stored admin must authorize                         |
+| `unpause()`                | Stored admin must authorize                         |
+| `upgrade()`                | `admin` param must authorize and match stored admin |
+| `migrate()`                | Stored admin must authorize                         |
+| `create_stream()`          | Sender must authorize                               |
+| `create_streams_batch()`   | Sender must authorize                               |
+| `withdraw()`               | Recipient (or registered delegate) must authorize   |
+| `cancel()`                 | Sender must authorize                               |
+| `transfer_stream()`        | Current recipient must authorize                    |
+| `top_up()`                 | Sender must authorize                               |
+| `bump_stream()`            | No authorization required                           |
+| `cleanup_stream()`         | Sender or recipient must authorize                  |
+| `update_stream_metadata()` | Sender must authorize                               |
+| `set_delegate()`           | Recipient must authorize                            |
+| `remove_delegate()`        | Recipient must authorize                            |
 
 Query operations (read-only) do not require authorization or fees.
 
@@ -169,18 +170,18 @@ Query operations (read-only) do not require authorization or fees.
 
 ## Error Codes
 
-| Code | Name | Meaning |
-|------|------|---------|
-| 1 | NotFound | Stream does not exist |
-| 2 | Unauthorized | Caller not authorized for operation |
-| 3 | InvalidAmount | Amount is invalid (≤0 or > total) |
-| 4 | InvalidTime | Time values invalid (start ≥ end) |
-| 5 | InvalidCliff | Cliff configuration invalid |
-| 6 | AlreadyCancelled | Stream already cancelled |
-| 7 | InsufficientFunds | Not enough balance for operation |
-| 8 | InvalidToken | Token contract not SEP-41 valid |
-| 9 | TransferFailed | Token transfer failed (allowance?) |
-| 10 | InsufficientWithdrawable | No funds available yet |
+| Code | Name                     | Meaning                             |
+| ---- | ------------------------ | ----------------------------------- |
+| 1    | NotFound                 | Stream does not exist               |
+| 2    | Unauthorized             | Caller not authorized for operation |
+| 3    | InvalidAmount            | Amount is invalid (≤0 or > total)   |
+| 4    | InvalidTime              | Time values invalid (start ≥ end)   |
+| 5    | InvalidCliff             | Cliff configuration invalid         |
+| 6    | AlreadyCancelled         | Stream already cancelled            |
+| 7    | InsufficientFunds        | Not enough balance for operation    |
+| 8    | InvalidToken             | Token contract not SEP-41 valid     |
+| 9    | TransferFailed           | Token transfer failed (allowance?)  |
+| 10   | InsufficientWithdrawable | No funds available yet              |
 
 See [API Reference - Error Codes](./api-reference.md#error-codes) for details.
 
@@ -190,16 +191,16 @@ See [API Reference - Error Codes](./api-reference.md#error-codes) for details.
 
 Approximate costs on Stellar Soroban (in stroops, 1 XLM = 10^7 stroops):
 
-| Operation | Cost |
-|-----------|------|
-| create_stream | 575,000 stroops (~0.0058 XLM) |
-| withdraw | 230,000 stroops (~0.0023 XLM) |
-| cancel | 172,500 stroops (~0.0017 XLM) |
-| transfer_stream | 115,000 stroops (~0.0012 XLM) |
-| top_up | 230,000 stroops (~0.0023 XLM) |
-| bump_stream | 115,000 stroops (~0.0012 XLM) |
-| get_stream (query) | Free |
-| get_withdrawable (query) | Free |
+| Operation                | Cost                          |
+| ------------------------ | ----------------------------- |
+| create_stream            | 575,000 stroops (~0.0058 XLM) |
+| withdraw                 | 230,000 stroops (~0.0023 XLM) |
+| cancel                   | 172,500 stroops (~0.0017 XLM) |
+| transfer_stream          | 115,000 stroops (~0.0012 XLM) |
+| top_up                   | 230,000 stroops (~0.0023 XLM) |
+| bump_stream              | 115,000 stroops (~0.0012 XLM) |
+| get_stream (query)       | Free                          |
+| get_withdrawable (query) | Free                          |
 
 ---
 
@@ -207,47 +208,47 @@ Approximate costs on Stellar Soroban (in stroops, 1 XLM = 10^7 stroops):
 
 ```typescript
 interface Stream {
-  id: u64;
-  sender: Address;
-  recipient: Address;
-  token: Address;
-  deposited_amount: i128;
-  withdrawn_amount: i128;
-  start_time: u64;
-  end_time: u64;
-  cliff_time: u64;
-  cliff_amount: i128;
-  amount_per_second: i128;
-  cancelled: boolean;
-  linear_amount: i128;
-  duration: i128;
+  id: u64
+  sender: Address
+  recipient: Address
+  token: Address
+  deposited_amount: i128
+  withdrawn_amount: i128
+  start_time: u64
+  end_time: u64
+  cliff_time: u64
+  cliff_amount: i128
+  amount_per_second: i128
+  cancelled: boolean
+  linear_amount: i128
+  duration: i128
 }
 
 interface StreamParams {
-  recipient: Address;
-  token: Address;
-  total_amount: i128;
-  start_time: u64;
-  end_time: u64;
-  cliff_time: u64;
-  cliff_amount: i128;
+  recipient: Address
+  token: Address
+  total_amount: i128
+  start_time: u64
+  end_time: u64
+  cliff_time: u64
+  cliff_amount: i128
 }
 
 // Used by create_streams_batch; same fields as StreamParams but a distinct type
 interface CreateStreamInput {
-  recipient: Address;
-  token: Address;
-  total_amount: i128;
-  start_time: u64;
-  end_time: u64;
-  cliff_time: u64;
-  cliff_amount: i128;
+  recipient: Address
+  token: Address
+  total_amount: i128
+  start_time: u64
+  end_time: u64
+  cliff_time: u64
+  cliff_amount: i128
 }
 
 interface StreamMetadata {
-  name: string;
-  category: string;
-  memo: string;
+  name: string
+  category: string
+  memo: string
 }
 ```
 

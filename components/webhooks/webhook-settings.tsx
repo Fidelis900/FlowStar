@@ -11,12 +11,14 @@ import {
   XCircle,
   Webhook,
   RotateCcw,
+  Download,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatTimeAgo } from '@/lib/stream-utils'
+import { downloadCSV, downloadJSON, webhookHistoryToCSV } from '@/lib/export'
 import { useWebhooks, type WebhookEventType } from '@/hooks/use-webhooks'
 
 const ALL_EVENTS: { value: WebhookEventType; label: string }[] = [
@@ -49,6 +51,7 @@ export function WebhookSettings() {
   ])
   const [testing, setTesting] = useState<string | null>(null)
   const [resending, setResending] = useState<number | null>(null)
+  const [newSecret, setNewSecret] = useState<string | null>(null)
 
   function toggleEvent(event: WebhookEventType) {
     setSelectedEvents((prev) =>
@@ -73,9 +76,12 @@ export function WebhookSettings() {
       setEventsError('Select at least one event type')
       return
     }
-    addWebhook(url.trim(), selectedEvents)
+    const secret = addWebhook(url.trim(), selectedEvents)
     setUrl('')
-    toast.success('Webhook registered')
+    setNewSecret(secret)
+    toast.success('Webhook registered', {
+      description: 'Save the signing secret shown below — it will not be shown again.',
+    })
   }
 
   async function handleTest(id: string) {
@@ -150,6 +156,34 @@ export function WebhookSettings() {
           <Plus className="size-4" />
           Register webhook
         </Button>
+
+        {newSecret && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+            <p className="text-sm font-medium">Signing secret</p>
+            <p className="text-xs text-muted-foreground">
+              Use this to verify the <code>X-FlowStar-Signature</code> header on incoming
+              deliveries (see docs/WEBHOOKS.md). It will not be shown again — copy it now.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+                {newSecret}
+              </code>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(newSecret)
+                  toast.success('Copied to clipboard')
+                }}
+              >
+                Copy
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setNewSecret(null)}>
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Registered webhooks */}
@@ -229,7 +263,31 @@ export function WebhookSettings() {
       {/* Delivery history */}
       {history.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-medium">Recent deliveries</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-medium">Recent deliveries</h2>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto gap-1.5 px-2 py-1 text-xs text-muted-foreground"
+                onClick={() =>
+                  downloadCSV(webhookHistoryToCSV(history), 'flowstar-webhook-history.csv')
+                }
+              >
+                <Download className="size-3.5" />
+                Export CSV
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto gap-1.5 px-2 py-1 text-xs text-muted-foreground"
+                onClick={() => downloadJSON(history, 'flowstar-webhook-history.json')}
+              >
+                <Download className="size-3.5" />
+                Export JSON
+              </Button>
+            </div>
+          </div>
           <div className="rounded-lg border border-border divide-y divide-border">
             {history.slice(0, 20).map((d, i) => (
               <div

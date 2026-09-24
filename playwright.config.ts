@@ -9,6 +9,10 @@ export default defineConfig({
   reporter: "html",
   outputDir: "test-results",
   snapshotDir: "./e2e/__screenshots__",
+  // Use a platform-agnostic snapshot path so screenshots generated on
+  // Windows (local) and Linux (CI) share the same baseline files.
+  snapshotPathTemplate:
+    "{snapshotDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   expect: {
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.01,
