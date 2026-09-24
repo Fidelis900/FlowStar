@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   XCircle,
   Webhook,
+  RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ const ALL_EVENTS: { value: WebhookEventType; label: string }[] = [
 export function WebhookSettings() {
   // Issue #677: surface webhook-config save failures instead of letting
   // localStorage.setItem throw uncaught / fail silently.
-  const { webhooks, history, addWebhook, removeWebhook, toggleWebhook, testWebhook } = useWebhooks(
+  const { webhooks, history, addWebhook, removeWebhook, toggleWebhook, testWebhook, resendDelivery } = useWebhooks(
     () =>
       toast.warning("Webhook settings aren't being saved", {
         description: 'Storage is full or unavailable — your changes may not persist.',
@@ -47,6 +48,7 @@ export function WebhookSettings() {
     'stream.completed',
   ])
   const [testing, setTesting] = useState<string | null>(null)
+  const [resending, setResending] = useState<number | null>(null)
 
   function toggleEvent(event: WebhookEventType) {
     setSelectedEvents((prev) =>
@@ -84,6 +86,17 @@ export function WebhookSettings() {
       else toast.error('Test delivery failed', { description: 'Check the URL and try again.' })
     } finally {
       setTesting(null)
+    }
+  }
+
+  async function handleResend(index: number) {
+    setResending(index)
+    try {
+      const ok = await resendDelivery(history[index])
+      if (ok) toast.success('Delivery resent successfully')
+      else toast.error('Resend failed', { description: 'Check the webhook URL and try again.' })
+    } finally {
+      setResending(null)
     }
   }
 
@@ -234,6 +247,18 @@ export function WebhookSettings() {
                 <div className="flex shrink-0 items-center gap-3 text-muted-foreground text-xs">
                   {d.statusCode && <span>{d.statusCode}</span>}
                   <span>{formatTimeAgo(d.deliveredAt)}</span>
+                  {!d.success && d.payload && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      aria-label="Resend delivery"
+                      disabled={resending === i}
+                      onClick={() => handleResend(i)}
+                    >
+                      <RotateCcw className={`size-3.5${resending === i ? ' animate-spin' : ''}`} />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

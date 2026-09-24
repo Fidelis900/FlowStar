@@ -8,6 +8,9 @@ import {
   unhideStream as unhideStreamStorage,
   blockSender as blockSenderStorage,
   unblockSender as unblockSenderStorage,
+  getPinnedStreamIds,
+  pinStream as pinStreamStorage,
+  unpinStream as unpinStreamStorage,
   subscribeHiddenStreams,
 } from '@/lib/hidden-streams'
 
@@ -20,10 +23,12 @@ import {
 export function useHiddenStreams() {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
   const [blockedSenders, setBlockedSenders] = useState<Set<string>>(new Set())
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set())
 
   const sync = useCallback(() => {
     setHiddenIds(getHiddenStreamIds())
     setBlockedSenders(getBlockedSenders())
+    setPinnedIds(getPinnedStreamIds())
   }, [])
 
   useEffect(() => {
@@ -34,11 +39,15 @@ export function useHiddenStreams() {
   return {
     hiddenIds,
     blockedSenders,
+    pinnedIds,
     isHidden: useCallback((id: string) => hiddenIds.has(id), [hiddenIds]),
     isBlocked: useCallback((address: string) => blockedSenders.has(address), [blockedSenders]),
+    isPinned: useCallback((id: string) => pinnedIds.has(id), [pinnedIds]),
     hideStream: hideStreamStorage,
     unhideStream: unhideStreamStorage,
     blockSender: blockSenderStorage,
     unblockSender: unblockSenderStorage,
+    pinStream: pinStreamStorage,
+    unpinStream: unpinStreamStorage,
   }
 }

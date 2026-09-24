@@ -24,6 +24,7 @@ export interface WebhookDelivery {
   statusCode: number | null
   deliveredAt: number
   success: boolean
+  payload?: WebhookPayload
 }
 
 const STORAGE_KEY = 'flowstar_webhooks'
@@ -179,6 +180,7 @@ export function useWebhooks(onSaveError?: () => void) {
           statusCode: result.statusCode,
           deliveredAt: Date.now(),
           success: result.success,
+          payload,
         }
         setHistory((prev) => {
           const next = [delivery, ...prev]
@@ -186,6 +188,29 @@ export function useWebhooks(onSaveError?: () => void) {
           return next
         })
       }
+    },
+    [webhooks, reportSaveResult],
+  )
+
+  const resendDelivery = useCallback(
+    async (delivery: WebhookDelivery): Promise<boolean> => {
+      const hook = webhooks.find((h) => h.id === delivery.webhookId)
+      if (!hook || !delivery.payload) return false
+      const result = await deliverWithRetry(hook.url, delivery.payload)
+      const newDelivery: WebhookDelivery = {
+        webhookId: delivery.webhookId,
+        eventType: delivery.eventType,
+        statusCode: result.statusCode,
+        deliveredAt: Date.now(),
+        success: result.success,
+        payload: delivery.payload,
+      }
+      setHistory((prev) => {
+        const next = [newDelivery, ...prev]
+        reportSaveResult(saveHistory(next))
+        return next
+      })
+      return result.success
     },
     [webhooks, reportSaveResult],
   )
@@ -205,5 +230,5 @@ export function useWebhooks(onSaveError?: () => void) {
     [webhooks],
   )
 
-  return { webhooks, history, addWebhook, removeWebhook, toggleWebhook, fireEvent, testWebhook }
+  return { webhooks, history, addWebhook, removeWebhook, toggleWebhook, fireEvent, testWebhook, resendDelivery }
 }
