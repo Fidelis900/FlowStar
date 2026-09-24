@@ -17,11 +17,15 @@ This directory captures the significant technical decisions made in FlowStar —
 | [ADR-008](./ADR-008-delegate-withdrawal-authorization.md) | Delegate Withdrawal Authorization | Accepted (open questions) |
 | [ADR-008](./ADR-008-notification-polling-and-dedup.md) | Notification Polling, Dedup, and Per-Wallet Scoping | Accepted |
 | [ADR-009](./ADR-009-hidden-streams-frontend-only.md) | Hidden Streams / Blocked Senders — Frontend-Only (localStorage) | Accepted |
+| [ADR-009](./ADR-009-webhook-retry-backoff.md) | Webhook Delivery Retry, Backoff, and History Retention | Accepted |
+| [ADR-009](./ADR-009-auto-withdraw-strategy-pattern.md) | Auto-Withdraw Strategy Pattern | Accepted (open correctness issues) |
+| [ADR-010](./ADR-010-csv-column-alias-resolution.md) | CSV Batch-Import Column-Alias Resolution | Accepted |
 
 Note: two ADRs currently share the number 008 (a numbering collision from
 two changes landing in parallel) — both files are kept as-is since
 `hooks/use-notifications.ts` already references one of them by filename;
 new ADRs should continue from 009.
+new ADRs should continue from the highest number in this table.
 
 ## How to add a new ADR
 

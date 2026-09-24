@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { xdr, scValToNative } from '@stellar/stellar-sdk'
 import { useNetwork } from '@/components/providers/network-provider'
 import { fetchStreamsForAddress } from '@/lib/contract'
+import { isNotificationTypeEnabled } from '@/hooks/use-notification-preferences'
 
 // Polling interval, ledger-cursor dedup, and per-wallet scoping are
 // documented in docs/adr/ADR-008-notification-polling-and-dedup.md.
@@ -221,6 +222,7 @@ export function useNotifications(walletAddress: string | null) {
 
   const addNotification = useCallback(
     (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
+      if (!isNotificationTypeEnabled(notif.type)) return
       const newNotif: AppNotification = {
         ...notif,
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
