@@ -30,10 +30,25 @@ const STORAGE_KEY = 'flowstar_webhooks'
 const HISTORY_KEY = 'flowstar_webhook_history'
 const MAX_HISTORY = 50
 
+// Issue #821: version of the delivered payload shape, so integrators can
+// detect a future breaking change instead of guessing from field presence.
+// Bump only for breaking changes — see docs/WEBHOOKS.md for the policy.
+export const WEBHOOK_SCHEMA_VERSION = 1
+
 export interface WebhookPayload {
+  schema_version: number
   event: WebhookEventType | string
   timestamp: string
   data: Record<string, unknown>
+}
+
+function buildPayload(event: WebhookEventType, data: Record<string, unknown>): WebhookPayload {
+  return {
+    schema_version: WEBHOOK_SCHEMA_VERSION,
+    event,
+    timestamp: new Date().toISOString(),
+    data,
+  }
 }
 
 function loadWebhooks(): WebhookConfig[] {
@@ -171,7 +186,7 @@ export function useWebhooks(onSaveError?: () => void) {
     async (eventType: WebhookEventType, data: Record<string, unknown>) => {
       const active = webhooks.filter((h) => h.enabled && h.events.includes(eventType))
       for (const hook of active) {
-        const payload = { event: eventType, timestamp: new Date().toISOString(), data }
+        const payload = buildPayload(eventType, data)
         const result = await deliverWithRetry(hook.url, payload)
         const delivery: WebhookDelivery = {
           webhookId: hook.id,
@@ -194,11 +209,10 @@ export function useWebhooks(onSaveError?: () => void) {
     async (id: string): Promise<boolean> => {
       const hook = webhooks.find((h) => h.id === id)
       if (!hook) return false
-      const payload = {
-        event: 'stream.created',
-        timestamp: new Date().toISOString(),
-        data: { stream_id: 0, note: 'FlowStar webhook test' },
-      }
+      const payload = buildPayload('stream.created', {
+        stream_id: 0,
+        note: 'FlowStar webhook test',
+      })
       const result = await deliverWithRetry(hook.url, payload, 1)
       return result.success
     },

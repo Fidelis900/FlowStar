@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useWebhooks } from '@/hooks/use-webhooks'
+import { useWebhooks, WEBHOOK_SCHEMA_VERSION } from '@/hooks/use-webhooks'
 import type { WebhookConfig } from '@/hooks/use-webhooks'
 
 const originalFetch = global.fetch
@@ -278,6 +278,43 @@ describe('useWebhooks', () => {
     })
     expect(global.fetch).toHaveBeenCalledTimes(2)
     expect(result.current.history).toHaveLength(2)
+  })
+
+  // ── payload schema version (issue #821) ────────────────────────────────────
+
+  function sentPayload(callIndex = 0) {
+    const init = vi.mocked(global.fetch).mock.calls[callIndex][1] as RequestInit
+    return JSON.parse(init.body as string)
+  }
+
+  it('fireEvent includes schema_version in the delivered payload', async () => {
+    vi.mocked(global.fetch).mockResolvedValue(makeOkResponse())
+    const { result } = renderHook(() => useWebhooks())
+    await act(async () => {
+      result.current.addWebhook('https://example.com/hook', ['stream.created'])
+    })
+    await act(async () => {
+      await result.current.fireEvent('stream.created', { stream_id: 42 })
+    })
+    const payload = sentPayload()
+    expect(payload.schema_version).toBe(WEBHOOK_SCHEMA_VERSION)
+    expect(payload.schema_version).toBe(1)
+    expect(payload.event).toBe('stream.created')
+    expect(payload.data).toEqual({ stream_id: 42 })
+    expect(typeof payload.timestamp).toBe('string')
+  })
+
+  it('testWebhook includes schema_version in the delivered payload', async () => {
+    vi.mocked(global.fetch).mockResolvedValue(makeOkResponse())
+    const { result } = renderHook(() => useWebhooks())
+    await act(async () => {
+      result.current.addWebhook('https://example.com/hook', ['stream.created'])
+    })
+    const id = result.current.webhooks[0].id
+    await act(async () => {
+      await result.current.testWebhook(id)
+    })
+    expect(sentPayload().schema_version).toBe(WEBHOOK_SCHEMA_VERSION)
   })
 
   it('fireEvent persists delivery history to localStorage', async () => {
