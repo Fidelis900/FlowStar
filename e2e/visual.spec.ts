@@ -161,7 +161,9 @@ test.describe("Stream detail pages", () => {
     await preparePage(page, { theme: "light", connect: true });
     await page.goto("/app/stream/2");
     await expect(
-      page.locator("text=Stream details").or(page.locator("text=Withdraw")),
+      page.getByRole("heading", { name: "Stream details" }).or(
+        page.getByRole("button", { name: "Withdraw" }).first(),
+      ),
     ).toBeVisible();
     await expect(page).toHaveScreenshot("stream-detail-active.png", {
       fullPage: true,
@@ -173,7 +175,9 @@ test.describe("Stream detail pages", () => {
     await page.goto("/app/stream/3");
     await expect(page.locator("text=Stream not found")).not.toBeVisible();
     await expect(
-      page.locator("text=Stream details").or(page.locator("text=Withdraw")),
+      page.getByRole("heading", { name: "Stream details" }).or(
+        page.getByRole("button", { name: "Withdraw" }).first(),
+      ),
     ).toBeVisible();
     await expect(page).toHaveScreenshot("stream-detail-completed.png", {
       fullPage: true,
