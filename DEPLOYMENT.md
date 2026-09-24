@@ -112,6 +112,69 @@ You can also inspect the contract on [Stellar Expert](https://stellar.expert/exp
 
 ---
 
+## 5. Monitor the live deployment
+
+A deployment that passed verification can still fail later: frontend errors, expired storage, or an unexpected admin action. Set up the checks below once a contract is live, especially on mainnet.
+
+### Frontend errors (Sentry)
+
+The frontend reports errors to Sentry through `@sentry/nextjs` ([sentry.client.config.ts](sentry.client.config.ts), [sentry.server.config.ts](sentry.server.config.ts), [sentry.edge.config.ts](sentry.edge.config.ts), and the wrapper in [lib/sentry.ts](lib/sentry.ts)). It is **enabled only when `NODE_ENV === "production"`**, so nothing is reported from `npm run dev`.
+
+Set these in the production environment (see `.env.local.example`):
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Browser DSN |
+| `SENTRY_DSN` | Server/edge DSN |
+| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Source map upload at build time. Keep `SENTRY_AUTH_TOKEN` server-only. |
+
+Recommended alerts in Sentry:
+
+- **Error-rate spike after a release.** Alert when the event count for a new release clearly exceeds the previous release's baseline. This is the fastest signal that a frontend deploy or a contract change broke something, and it is often your cue to start incident response.
+- **New issue.** Alert on the first occurrence of any new issue in production.
+- **Per-operation failures.** Errors reported through `captureError` carry an `operation` tag (for example `use-streams`, `use-stream`, `use-archived-streams`, `page_render`). A spike in the data-loading hooks usually means the RPC is failing or the configured contract ID is wrong, not that there is a UI bug.
+
+Performance traces are sampled at 10% (`tracesSampleRate: 0.1`). Wallet addresses are truncated and request payloads are redacted before events are sent, so don't expect full addresses or amounts in Sentry events.
+
+### Contract storage TTL
+
+Soroban storage entries expire unless their TTL is extended (see [ADR-001](docs/adr/ADR-001-persistent-storage.md) and the storage notes at the top of [contracts/streaming/src/lib.rs](contracts/streaming/src/lib.rs)):
+
+| Entry | TTL on write | Extended by |
+| --- | --- | --- |
+| Instance storage (`Admin`, `Paused`, `NextId`) | ~1 day (`INSTANCE_TTL_LEDGERS`) | `initialize`, `pause`, `unpause`, stream creation |
+| `Stream(id)` | ~30 days (`PERSISTENT_TTL_LEDGERS`) | every write to the stream; `bump_stream` |
+| `Delegate(id)`, `StreamMetadata(id)`, index lists | ~30 days | only their own writes. `bump_stream` does **not** extend these. |
+
+What to monitor:
+
+- **Instance TTL.** The contract instance's TTL is extended only by the writes listed above. If a quiet contract goes a day or more with none of those writes, check its TTL so the instance doesn't come close to expiry. Extend it manually if needed (with no `--key`, `stellar contract extend` extends the contract instance):
+  ```bash
+  stellar contract extend --id <contract-id> --ledgers-to-extend 518400 \
+    --durability persistent --source deployer --network mainnet
+  ```
+- **Long-idle streams.** An active stream with no withdrawal, top-up, or other write for ~30 days can expire. Anyone can call `bump_stream` to extend it:
+  ```bash
+  stellar contract invoke --id <contract-id> --source deployer --network mainnet \
+    -- bump_stream --stream_id <id>
+  ```
+  For high-value deployments, run a scheduled job that lists active streams and bumps any whose TTL is within about 7 days of expiry.
+- **Check real TTLs, not estimates.** The stream page's TTL warning (`app/app/stream/[id]/page.tsx`) *estimates* days remaining from the last write. For alerting, read the actual `liveUntilLedgerSeq` returned by the RPC `getLedgerEntries` method for the instance and `Stream(id)` keys.
+
+### Contract admin activity
+
+Pausing, upgrading and migrating the contract all change the behavior for every user, so any of them happening unexpectedly is an incident:
+
+- **Pause state.** The contract emits `PauseEvent` and `UnpauseEvent`. Alert on both, because a pause blocks every write, including recipient withdrawals.
+- **WASM changes.** `upgrade` emits **no event**. To detect an upgrade, poll the contract instance ledger entry and alert when its executable WASM hash changes, and check that `version` returns the value you expect.
+
+### Network and CI health
+
+- Subscribe to [Stellar Status](https://status.stellar.org/) and your RPC provider's status page. When RPC is degraded, Sentry errors rise even though nothing in FlowStar changed.
+- Keep `contract-ci.yml` and `security.yml` green on `main`. A red contract CI run on `main` means the next deploy is unverified.
+
+---
+
 ## Network configuration
 
 Which network the app talks to is controlled by `NEXT_PUBLIC_STELLAR_NETWORK`
