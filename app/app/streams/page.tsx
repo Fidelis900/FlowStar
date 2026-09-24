@@ -23,6 +23,13 @@ import { VirtualStreamList } from '@/components/streams/virtual-stream-list'
 import { StreamGanttView } from '@/components/streams/stream-gantt-view'
 import { EmptyStreams } from '@/components/streams/empty-state'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useStreams } from '@/hooks/use-streams'
 import { useArchivedStreams } from '@/hooks/use-archived-streams'
 import { useNow } from '@/hooks/use-now'
@@ -34,6 +41,25 @@ import { useHiddenStreams } from '@/hooks/use-hidden-streams'
 import { useStreamsViewPreference } from '@/hooks/use-streams-view-preference'
 import { getStreamStatus, getWithdrawableAmount } from '@/lib/stream-utils'
 import type { StreamStatus } from '@/types/stream'
+
+type SortOption =
+  | 'default'
+  | 'amount-desc'
+  | 'amount-asc'
+  | 'start-desc'
+  | 'start-asc'
+  | 'end-asc'
+  | 'end-desc'
+
+const SORT_OPTIONS: { label: string; value: SortOption }[] = [
+  { label: 'Default order', value: 'default' },
+  { label: 'Amount: high to low', value: 'amount-desc' },
+  { label: 'Amount: low to high', value: 'amount-asc' },
+  { label: 'Start date: newest first', value: 'start-desc' },
+  { label: 'Start date: oldest first', value: 'start-asc' },
+  { label: 'End date: soonest first', value: 'end-asc' },
+  { label: 'End date: latest first', value: 'end-desc' },
+]
 
 const STATUS_FILTERS: { label: string; value: StreamStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -124,6 +150,7 @@ function StreamsPage() {
   const search = searchParams.get('q') ?? ''
   const statusFilter = (searchParams.get('status') ?? 'all') as StreamStatus | 'all'
   const tokenFilter = searchParams.get('token') ?? 'all'
+  const sortBy = (searchParams.get('sort') ?? 'default') as SortOption
 
   const isConcealed = (s: (typeof all)[number]) =>
     hiddenIds.has(s.id) || blockedSenders.has(s.sender)
@@ -165,6 +192,27 @@ function StreamsPage() {
       s.token.symbol.toLowerCase().includes(q)
     return matchesStatus && matchesToken && matchesSearch
   })
+
+  if (sortBy !== 'default') {
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'amount-desc':
+          return a.depositedAmount < b.depositedAmount ? 1 : a.depositedAmount > b.depositedAmount ? -1 : 0
+        case 'amount-asc':
+          return a.depositedAmount < b.depositedAmount ? -1 : a.depositedAmount > b.depositedAmount ? 1 : 0
+        case 'start-desc':
+          return a.startTime < b.startTime ? 1 : a.startTime > b.startTime ? -1 : 0
+        case 'start-asc':
+          return a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0
+        case 'end-asc':
+          return a.endTime < b.endTime ? -1 : a.endTime > b.endTime ? 1 : 0
+        case 'end-desc':
+          return a.endTime < b.endTime ? 1 : a.endTime > b.endTime ? -1 : 0
+        default:
+          return 0
+      }
+    })
+  }
 
   const hasFilters = search || statusFilter !== 'all' || tokenFilter !== 'all'
 
@@ -456,6 +504,23 @@ function StreamsPage() {
                     {t === 'all' ? 'All tokens' : t}
                   </button>
                 ))}
+              </div>
+
+              {/* Sort */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Sort by</span>
+                <Select value={sortBy} onValueChange={(v) => setParam('sort', v)}>
+                  <SelectTrigger className="h-8 w-[200px] text-xs" data-testid="streams-sort-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Status filter */}

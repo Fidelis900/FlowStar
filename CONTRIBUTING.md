@@ -104,6 +104,40 @@ chore: bump soroban-sdk to v26 (#101)
 
 ---
 
+## Reward programs and campaign labels
+
+Some FlowStar issues are part of external open-source contribution programs, and these labels mark them. FlowStar itself does not pay contributors. **The external program decides whether a contribution is rewarded, how much, and when.** A label shows that an issue is part of a program. It does not guarantee a reward.
+
+### What the labels mean
+
+| Label | Meaning |
+|---|---|
+| `Stellar Wave` | The issue is part of the Stellar Wave program. |
+| `GrantFox OSS` | The issue is tracked in GrantFox's open-source program. |
+| `Maybe Rewarded` | The issue *may* be eligible for a GrantFox reward. GrantFox decides whether it is. |
+| `Official Campaign \| FWC26`, `Third Campaign` | The issue belongs to a specific time-boxed campaign in a program. Campaign rules and deadlines come from the program. |
+
+Issues without these labels are ordinary contributions. They are just as welcome, but no program tracks them.
+
+### Eligibility basics
+
+The program's own terms decide eligibility. On FlowStar's side:
+
+1. **Get assigned before starting.** Comment on the issue and wait for a maintainer to assign you. That way two people don't work on the same issue. If you start unassigned work on a program issue, it may not count.
+2. **Only merged PRs count.** Maintainers can only confirm contributions that went through the [PR process](#pr-process) and were merged into `main`. A PR that is opened but not merged will not count.
+3. **Link the issue.** Put `Closes #NNN` in the PR description and include the issue number in the branch name and commit messages (see above). That is how program tracking connects your PR to the labeled issue.
+4. **Stay inside the issue's scope.** Unrelated changes in the same PR slow down review and can hold up the merge.
+5. **Don't let an assigned issue go quiet.** If you can no longer work on it, say so on the issue so it can be reassigned.
+
+Security findings follow [SECURITY.md](./SECURITY.md) instead of this process. Report them privately, not in a labeled public issue.
+
+### Questions
+
+- Ask questions **about a specific issue** (scope, approach, assignment) in that issue's comments.
+- Ask questions **about the program itself** (payouts, reward amounts, deadlines, sign-up, account setup) through Stellar Wave's or GrantFox's own channels. FlowStar maintainers can't answer those for the program.
+
+---
+
 ## Running tests
 
 ### Unit tests (Vitest)

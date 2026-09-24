@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { RequireWallet } from '@/components/layout/require-wallet'
 import { WebhookSettings } from '@/components/webhooks/webhook-settings'
+import { NotificationPreferencesSettings } from '@/components/notifications/notification-preferences'
+import { AddressBookSettings } from '@/components/settings/address-book-settings'
+import { ClearLocalData } from '@/components/settings/clear-local-data'
 import { UsdToggle } from './usd-toggle'
 
 export const metadata: Metadata = {
@@ -25,6 +28,15 @@ export default function SettingsPage() {
         </section>
 
         <section>
+          <h2 className="text-lg font-medium mb-4">Notifications</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Choose which in-app notification types you want to see. Disabled types are never
+            recorded or shown, including as browser notifications.
+          </p>
+          <NotificationPreferencesSettings />
+        </section>
+
+        <section>
           <h2 className="text-lg font-medium mb-4">Webhooks</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Register webhook URLs to receive HTTP POST notifications when stream events occur.
@@ -32,6 +44,19 @@ export default function SettingsPage() {
             disable a webhook without deleting it.
           </p>
           <WebhookSettings />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Address Book</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Addresses you save while creating a stream. Rename or remove entries here.
+          </p>
+          <AddressBookSettings />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Danger zone</h2>
+          <ClearLocalData />
         </section>
       </div>
     </RequireWallet>

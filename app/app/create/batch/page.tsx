@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Loader2, Upload } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Download, Loader2, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { RequireWallet } from '@/components/layout/require-wallet'
@@ -19,6 +19,7 @@ import { useContract } from '@/hooks/use-contract'
 import { useNetwork } from '@/components/providers/network-provider'
 import { parseTokenAmount, formatDateTime } from '@/lib/stream-utils'
 import { parseCsvBatch, parseDuration, resolveCliffTime, type CsvBatchRow } from '@/lib/csv-parser'
+import { downloadCSV } from '@/lib/export'
 import { isValidStellarAddress } from '@/lib/stellar'
 import type { TokenInfo } from '@/types/stream'
 
@@ -173,6 +174,19 @@ export default function BatchCreatePage() {
     [selectedTokenInfo.decimals],
   )
 
+  const handleDownloadTemplate = useCallback(() => {
+    const header = 'recipient,amount,start_time,end_time,cliff_time,cliff_amount'
+    const exampleRow = [
+      'GABC1234567890EXAMPLE1234567890EXAMPLE1234567890EXAMPLE1234',
+      '1000',
+      String(Math.floor(Date.now() / 1000)),
+      String(Math.floor(Date.now() / 1000) + 30 * 24 * 3600),
+      '',
+      '',
+    ].join(',')
+    downloadCSV(`${header}\n${exampleRow}\n`, 'flowstar-batch-template.csv')
+  }, [])
+
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
@@ -284,7 +298,19 @@ export default function BatchCreatePage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="csvFile">CSV file</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="csvFile">CSV file</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto gap-1.5 px-2 py-1 text-xs text-muted-foreground"
+                    onClick={handleDownloadTemplate}
+                  >
+                    <Download className="size-3.5" />
+                    Download CSV template
+                  </Button>
+                </div>
                 <Input id="csvFile" type="file" accept=".csv" onChange={handleFileChange} />
                 <p className="text-xs text-muted-foreground">
                   Format: recipient,amount,start_time,end_time,cliff_time,cliff_amount. Use
