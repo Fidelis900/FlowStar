@@ -10,12 +10,14 @@ import {
   CheckCircle2,
   XCircle,
   Webhook,
+  Download,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatTimeAgo } from '@/lib/stream-utils'
+import { downloadCSV, downloadJSON, webhookHistoryToCSV } from '@/lib/export'
 import { useWebhooks, type WebhookEventType } from '@/hooks/use-webhooks'
 
 const ALL_EVENTS: { value: WebhookEventType; label: string }[] = [
@@ -216,7 +218,31 @@ export function WebhookSettings() {
       {/* Delivery history */}
       {history.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-medium">Recent deliveries</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-medium">Recent deliveries</h2>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto gap-1.5 px-2 py-1 text-xs text-muted-foreground"
+                onClick={() =>
+                  downloadCSV(webhookHistoryToCSV(history), 'flowstar-webhook-history.csv')
+                }
+              >
+                <Download className="size-3.5" />
+                Export CSV
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto gap-1.5 px-2 py-1 text-xs text-muted-foreground"
+                onClick={() => downloadJSON(history, 'flowstar-webhook-history.json')}
+              >
+                <Download className="size-3.5" />
+                Export JSON
+              </Button>
+            </div>
+          </div>
           <div className="rounded-lg border border-border divide-y divide-border">
             {history.slice(0, 20).map((d, i) => (
               <div
