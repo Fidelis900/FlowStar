@@ -16,6 +16,7 @@ This directory captures the significant technical decisions made in FlowStar —
 | [ADR-007](./ADR-007-integer-division-dust.md) | Integer Division Dust Handling | Accepted |
 | [ADR-008](./ADR-008-delegate-withdrawal-authorization.md) | Delegate Withdrawal Authorization | Accepted (open questions) |
 | [ADR-008](./ADR-008-notification-polling-and-dedup.md) | Notification Polling, Dedup, and Per-Wallet Scoping | Accepted |
+| [ADR-009](./ADR-009-hidden-streams-frontend-only.md) | Hidden Streams / Blocked Senders — Frontend-Only (localStorage) | Accepted |
 | [ADR-009](./ADR-009-webhook-retry-backoff.md) | Webhook Delivery Retry, Backoff, and History Retention | Accepted |
 | [ADR-009](./ADR-009-auto-withdraw-strategy-pattern.md) | Auto-Withdraw Strategy Pattern | Accepted (open correctness issues) |
 | [ADR-010](./ADR-010-csv-column-alias-resolution.md) | CSV Batch-Import Column-Alias Resolution | Accepted |
