@@ -133,6 +133,79 @@ Update `KNOWN_TOKENS` addresses to match the mainnet token contracts.
 
 ---
 
+## Rollback and incident response
+
+The streaming contract holds user funds in escrow, so a bad deployment is handled differently from a bad web release. This section lists the recovery options available and a step-by-step checklist for using them.
+
+### Before every contract release
+
+Recovery is only possible if these are done **before** the release:
+
+- **Record the currently live WASM hash** so you can switch back to it. A WASM hash is the SHA-256 of the `.wasm` bytes, and `stellar contract upload` prints it:
+  ```bash
+  sha256sum contracts/target/wasm32v1-none/release/flowstar_streaming.wasm
+  ```
+- **Keep the old `.wasm` file** (for example as a CI artifact or on a release tag). If its code entry has expired on the ledger, you will need to re-upload it before rolling back.
+- **Bump `CONTRACT_VERSION`** in `contracts/streaming/src/lib.rs`. The `version()` function returns this constant. It is the only way to tell from the chain which build is live, and it only helps if each release bumps it.
+- **Make storage changes backward-compatible.** If the new version writes data in a layout the old code cannot read, rolling back the WASM will break those streams. Prefer additive changes (new keys, new optional fields) over rewriting existing entries.
+- **Test the upgrade on testnet first**, including rolling back to the previous hash.
+
+### Recovery options
+
+Listed from least to most disruptive:
+
+| Option | When to use | Effect on streams |
+| --- | --- | --- |
+| **Frontend rollback** | The problem is in the web app only | None. The contract is untouched. |
+| **Pause** | The contract is misbehaving and you need time | All writes blocked, **including withdrawals**. Reads still work. |
+| **Upgrade to the previous WASM** | A contract release introduced a bug | Contract ID, streams and escrowed funds are kept |
+| **Upgrade to a fixed WASM** | Rolling back isn't possible (for example a storage layout change) | Contract ID, streams and escrowed funds are kept |
+| **Deploy a new contract** | Last resort only | Existing streams stay in the old contract; see below |
+
+**Frontend rollback.** Redeploy the previous frontend build on your hosting provider (staging uses Vercel, see `.github/workflows/staging.yml`). `NEXT_PUBLIC_STREAM_CONTRACT_ID_TESTNET`/`_MAINNET` and `NEXT_PUBLIC_STELLAR_NETWORK` are compiled into the build, so changing them requires a rebuild, not only an env change.
+
+**Pause.** The admin can call `pause` to block `create_stream`, `create_streams_batch`, `top_up`, `withdraw`, `cancel`, `partial_cancel`, `transfer_stream`, `update_stream_metadata`, `set_delegate` and `remove_delegate`. The following still work while paused: all read functions, `bump_stream`, `cleanup_stream`, `upgrade` and `migrate`, so you can still upgrade a paused contract.
+```bash
+stellar contract invoke --id <contract-id> --source <admin-identity> --network mainnet -- pause
+stellar contract invoke --id <contract-id> --source <admin-identity> --network mainnet -- unpause
+```
+Pausing also stops recipients from withdrawing funds they have already earned, so keep the contract paused only as long as necessary.
+
+**Upgrade (roll back or roll forward).** `upgrade` swaps the contract's WASM in place, keeping the contract ID and all storage:
+```bash
+# Only needed if the target WASM is not installed on the ledger
+stellar contract upload --wasm <path-to-wasm> --source <admin-identity> --network mainnet
+
+stellar contract invoke --id <contract-id> --source <admin-identity> --network mainnet \
+  -- upgrade --admin <admin-address> --new_wasm_hash <wasm-hash>
+
+# Confirm which build is live
+stellar contract invoke --id <contract-id> --source <admin-identity> --network mainnet -- version
+```
+
+**How `migrate()` and `CONTRACT_VERSION` fit in:**
+
+- `CONTRACT_VERSION` is a compile-time constant. It is **not** stored on-chain, and neither `upgrade` nor `migrate` checks it. After any upgrade or rollback, `version()` tells you which build is running.
+- `migrate()` currently does only one thing: it **unconditionally unpauses** the contract. It runs no storage migration and has no protection against being called twice. **Don't call `migrate` during an incident until you are ready to resume normal operation.** It lifts a pause just as `unpause` does.
+- If a future release needs a real storage migration, add it to `migrate()`, make it safe to run more than once, and write down whether the previous WASM can still read the migrated data. If it can't, rollback is no longer an option for that release, and only a fix-forward upgrade is.
+
+**Deploying a new contract (last resort).** A fresh deploy gets a new contract ID. Existing streams and their escrowed funds **stay in the old contract** and cannot be moved. The old contract must remain unpaused and working so recipients can withdraw and senders can cancel. The frontend reads only one contract ID per network, so users of old streams lose UI access unless you provide another way in. Prefer an upgrade whenever possible.
+
+**Admin key compromise.** The contract has no function for changing the admin. Whoever holds the admin key can pause the contract or upgrade it to arbitrary code, and nothing in the contract can recover from that. Store the admin key offline or in a multisig, and treat a suspected compromise as a critical incident. Warn users publicly as soon as possible.
+
+### Incident response checklist
+
+1. **Detect.** The usual triggers are a Sentry alert, an unexpected `PauseEvent` or WASM change, user reports, or a failing check against the live contract.
+2. **Assess** using read-only calls: `version`, `get_stream`, `get_withdrawable`. Is it a frontend problem, a contract problem, or an RPC/network problem ([Stellar Status](https://status.stellar.org/))? Are funds at risk?
+3. **Contain.** If funds are at risk or state is being corrupted, `pause` immediately. For frontend-only issues, roll back the frontend instead.
+4. **Communicate.** Post a status update telling users what is affected, whether withdrawals are paused, and when the next update will come. Report security issues privately according to [SECURITY.md](SECURITY.md), not in public issues.
+5. **Fix.** Upgrade to the previous WASM hash, or to a fixed build that has been tested on testnet.
+6. **Verify.** Check `version`, read a sample of existing streams with `get_stream`, and run a small withdrawal on testnet against the same WASM.
+7. **Resume.** Call `unpause`, or `migrate` if the new build needs its migration to run.
+8. **Follow up.** Write a short post-mortem. Add a regression test in `contracts/streaming/src/` and update this section if the process fell short.
+
+---
+
 
 **"Wallet not connected"** — Make sure Freighter is installed and set to the same network as your deployment.
 
