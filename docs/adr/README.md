@@ -14,6 +14,7 @@ This directory captures the significant technical decisions made in FlowStar —
 | [ADR-005](./ADR-005-bigint-token-amounts.md) | BigInt for Token Amounts | Accepted |
 | [ADR-006](./ADR-006-freighter-wallet-strategy.md) | Multi-Wallet Strategy (formerly Freighter-Only) | Accepted (Updated) |
 | [ADR-007](./ADR-007-integer-division-dust.md) | Integer Division Dust Handling | Accepted |
+| [ADR-008](./ADR-008-delegate-withdrawal-authorization.md) | Delegate Withdrawal Authorization | Accepted (open questions) |
 
 ## How to add a new ADR
 
