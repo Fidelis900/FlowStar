@@ -47,6 +47,7 @@ export function WebhookSettings() {
     'stream.completed',
   ])
   const [testing, setTesting] = useState<string | null>(null)
+  const [newSecret, setNewSecret] = useState<string | null>(null)
 
   function toggleEvent(event: WebhookEventType) {
     setSelectedEvents((prev) =>
@@ -71,9 +72,12 @@ export function WebhookSettings() {
       setEventsError('Select at least one event type')
       return
     }
-    addWebhook(url.trim(), selectedEvents)
+    const secret = addWebhook(url.trim(), selectedEvents)
     setUrl('')
-    toast.success('Webhook registered')
+    setNewSecret(secret)
+    toast.success('Webhook registered', {
+      description: 'Save the signing secret shown below — it will not be shown again.',
+    })
   }
 
   async function handleTest(id: string) {
@@ -137,6 +141,34 @@ export function WebhookSettings() {
           <Plus className="size-4" />
           Register webhook
         </Button>
+
+        {newSecret && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+            <p className="text-sm font-medium">Signing secret</p>
+            <p className="text-xs text-muted-foreground">
+              Use this to verify the <code>X-FlowStar-Signature</code> header on incoming
+              deliveries (see docs/WEBHOOKS.md). It will not be shown again — copy it now.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+                {newSecret}
+              </code>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(newSecret)
+                  toast.success('Copied to clipboard')
+                }}
+              >
+                Copy
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setNewSecret(null)}>
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Registered webhooks */}
