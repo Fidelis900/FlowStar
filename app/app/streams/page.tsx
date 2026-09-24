@@ -141,7 +141,7 @@ function StreamsPage() {
   const { address } = useWallet()
   const { withdraw, cancel } = useContract()
   const [selectMode, setSelectMode] = useState(false)
-  const { hiddenIds, blockedSenders } = useHiddenStreams()
+  const { hiddenIds, blockedSenders, hideStream } = useHiddenStreams()
   const [showHidden, setShowHidden] = useState(false)
   const { view, setView } = useStreamsViewPreference()
   // Issue #688: Active vs Archived tab.
@@ -258,6 +258,11 @@ function StreamsPage() {
     await runBulk(eligibleCancelIds, async (id) => {
       await cancel(id)
     })
+  }
+
+  const handleBulkHide = () => {
+    selectedItems.forEach((s) => hideStream(s.id))
+    exitSelectMode()
   }
 
   return (
@@ -451,6 +456,16 @@ function StreamsPage() {
                 >
                   <Ban className="mr-2 h-4 w-4" />
                   Cancel ({eligibleCancelIds.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isBulkRunning || selected.size === 0}
+                  onClick={handleBulkHide}
+                  data-testid="bulk-hide-button"
+                >
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  Hide selected ({selected.size})
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => clear()}>
                   <X className="mr-2 h-4 w-4" />

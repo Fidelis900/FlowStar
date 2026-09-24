@@ -84,3 +84,25 @@ export function unblockSender(address: string) {
   senders.delete(address)
   writeSet(BLOCKED_SENDERS_KEY, senders)
 }
+
+// ─── Pinned streams ───────────────────────────────────────────────────────────
+
+const PINNED_STREAMS_KEY = 'flowstar:pinned-streams'
+
+export function getPinnedStreamIds(): Set<string> {
+  return readSet(PINNED_STREAMS_KEY)
+}
+
+export function pinStream(id: string) {
+  const ids = getPinnedStreamIds()
+  if (ids.has(id)) return
+  ids.add(id)
+  writeSet(PINNED_STREAMS_KEY, ids)
+}
+
+export function unpinStream(id: string) {
+  const ids = getPinnedStreamIds()
+  if (!ids.has(id)) return
+  ids.delete(id)
+  writeSet(PINNED_STREAMS_KEY, ids)
+}

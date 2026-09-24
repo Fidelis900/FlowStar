@@ -21,7 +21,7 @@ import type { StreamData } from '@/types/stream'
 
 export function Dashboard() {
   const {
-    sent,
+    sent: allSent,
     received: allReceived,
     all: allStreams,
     loading,
@@ -31,13 +31,21 @@ export function Dashboard() {
   } = useStreams()
   const { withdrawAll, pending } = useContract()
   const now = useNow(1000)
-  const { hiddenIds, blockedSenders } = useHiddenStreams()
+  const { hiddenIds, blockedSenders, pinnedIds } = useHiddenStreams()
 
   // Hidden streams (and streams from blocked senders) never appear on the
   // dashboard — neither in the lists nor in the counts (issue #151).
   const isVisible = (s: StreamData) => !hiddenIds.has(s.id) && !blockedSenders.has(s.sender)
-  const received = allReceived.filter(isVisible)
-  const all = allStreams.filter(isVisible)
+
+  // Pinned streams float to the top of every tab (issue #835).
+  const sortPinned = (arr: StreamData[]) => [
+    ...arr.filter((s) => pinnedIds.has(s.id)),
+    ...arr.filter((s) => !pinnedIds.has(s.id)),
+  ]
+
+  const received = sortPinned(allReceived.filter(isVisible))
+  const all = sortPinned(allStreams.filter(isVisible))
+  const sent = sortPinned(allSent)
   const [withdrawProgress, setWithdrawProgress] = useState<{
     current: number
     total: number

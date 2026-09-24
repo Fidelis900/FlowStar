@@ -1,9 +1,9 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, MoreVertical, EyeOff, Eye, UserX, UserCheck } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, MoreVertical, EyeOff, Eye, UserX, UserCheck, Link2, Check, Pin, PinOff } from 'lucide-react'
 import { useNow } from '@/hooks/use-now'
 import { useWallet } from '@/hooks/use-wallet'
 import { useTokenPrice, formatUsd } from '@/hooks/use-token-price'
@@ -68,7 +68,7 @@ function StreamCardInner({
   const { usdPrice, loading: priceLoading } = useTokenPrice(stream.token.symbol)
   const [showUsd] = useShowUsd()
   const isCancelling = useIsStreamCancelling(stream.id)
-  const { isBlocked, hideStream, unhideStream, blockSender, unblockSender } = useHiddenStreams()
+  const { isBlocked, hideStream, unhideStream, blockSender, unblockSender, isPinned, pinStream, unpinStream } = useHiddenStreams()
   const status = getStreamStatus(stream, now)
   const progress = getStreamProgress(stream, now)
   const withdrawnFrac =
@@ -94,6 +94,21 @@ function StreamCardInner({
   // "Hide stream" / "Block sender" only make sense for incoming streams —
   // recipients are the ones who didn't opt in (issue #151).
   const showHideMenu = !isOutgoing && !selectable
+
+  // "Pin to top" is available on all streams (issue #835).
+  const showOptionsMenu = !selectable
+  const pinned = isPinned(stream.id)
+
+  function handlePinToggle(e: { preventDefault: () => void }) {
+    e.preventDefault()
+    if (pinned) {
+      unpinStream(stream.id)
+      toast.success('Stream unpinned')
+    } else {
+      pinStream(stream.id)
+      toast.success('Stream pinned to top')
+    }
+  }
 
   function handleHideToggle(e: { preventDefault: () => void }) {
     e.preventDefault()
@@ -122,17 +137,42 @@ function StreamCardInner({
     }
   }
 
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  function handleCopyLink(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const url =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/app/stream/${stream.id}`
+        : `https://flowstar.app/app/stream/${stream.id}`
+    navigator.clipboard.writeText(url)
+    setCopiedLink(true)
+    setTimeout(() => setCopiedLink(false), 1500)
+    toast.success('Link copied to clipboard')
+  }
+
   return (
     <Link
       href={`/app/stream/${stream.id}`}
       className={
         'group relative block rounded-2xl border bg-card transition-colors hover:border-primary/40 ' +
         (compact ? 'px-3 py-2' : 'p-5') + ' ' +
-        (selectable && selected ? 'border-primary' : 'border-border')
+        (selectable && selected ? 'border-primary' : pinned ? 'border-primary/60' : 'border-border')
       }
       aria-label={ariaLabel}
       data-testid={`stream-card-${stream.id}`}
     >
+      {/* Pin indicator — small badge in top-left corner of pinned full-height cards */}
+      {pinned && !compact && (
+        <span
+          className="absolute left-3 top-3 z-10 flex size-5 items-center justify-center rounded-full bg-primary/10 text-primary"
+          aria-label="Pinned to top"
+          title="Pinned to top"
+        >
+          <Pin className="size-3" />
+        </span>
+      )}
       {selectable && (
         <input
           type="checkbox"
@@ -148,7 +188,34 @@ function StreamCardInner({
           className="absolute right-4 top-1/2 z-10 size-4 -translate-y-1/2 accent-primary"
         />
       )}
-      {showHideMenu && (
+      {/* Copy-link quick action — visible on hover for all non-selectable cards */}
+      {!selectable && (
+        <div
+          className={
+            'absolute z-10 top-1/2 -translate-y-1/2 ' +
+            (showOptionsMenu ? 'right-11' : 'right-3')
+          }
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Copy stream link"
+            data-testid={`stream-card-copy-link-${stream.id}`}
+            onClick={handleCopyLink}
+            className="flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-secondary hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            {copiedLink ? (
+              <Check className="size-4 text-primary" />
+            ) : (
+              <Link2 className="size-4" />
+            )}
+          </button>
+        </div>
+      )}
+      {showOptionsMenu && (
         <div
           className="absolute right-3 top-1/2 z-10 -translate-y-1/2"
           onClick={(e) => {
@@ -168,32 +235,49 @@ function StreamCardInner({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleHideToggle}>
-                {isHiddenView ? (
+              <DropdownMenuItem onClick={handlePinToggle}>
+                {pinned ? (
                   <>
-                    <Eye className="size-4 mr-2" />
-                    Unhide stream
+                    <PinOff className="size-4 mr-2" />
+                    Unpin stream
                   </>
                 ) : (
                   <>
-                    <EyeOff className="size-4 mr-2" />
-                    Hide stream
+                    <Pin className="size-4 mr-2" />
+                    Pin to top
                   </>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleBlockToggle} variant="destructive">
-                {isBlocked(stream.sender) ? (
-                  <>
-                    <UserCheck className="size-4 mr-2" />
-                    Unblock sender
-                  </>
-                ) : (
-                  <>
-                    <UserX className="size-4 mr-2" />
-                    Block sender
-                  </>
-                )}
-              </DropdownMenuItem>
+              {showHideMenu && (
+                <>
+                  <DropdownMenuItem onClick={handleHideToggle}>
+                    {isHiddenView ? (
+                      <>
+                        <Eye className="size-4 mr-2" />
+                        Unhide stream
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="size-4 mr-2" />
+                        Hide stream
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleBlockToggle} variant="destructive">
+                    {isBlocked(stream.sender) ? (
+                      <>
+                        <UserCheck className="size-4 mr-2" />
+                        Unblock sender
+                      </>
+                    ) : (
+                      <>
+                        <UserX className="size-4 mr-2" />
+                        Block sender
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -201,7 +285,7 @@ function StreamCardInner({
 
       {compact ? (
         /* ── Compact / dense single-row layout (issue #832) ── */
-        <div className="flex items-center gap-3 pr-8">
+        <div className={'flex items-center gap-3 ' + (!selectable ? 'pr-20' : 'pr-8')}>
           {/* Direction icon — smaller in compact mode */}
           <span
             className={
