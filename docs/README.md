@@ -4,6 +4,7 @@ Complete documentation for the FlowStar payment streaming smart contract.
 
 ## Quick Links
 
+- **[FAQ](./FAQ.md)** - Common contributor questions: mock mode, networks, issue assignment, troubleshooting
 - **[API Reference](./api-reference.md)** - Complete function reference with parameters, returns, and gas costs
 - **[Integration Guide](./integration-guide.md)** - Step-by-step guide with 5 practical examples
 - **[CLI Examples](./cli-examples.md)** - Command-line interface examples for contract interaction

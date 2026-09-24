@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 
 const KEY = 'flowstar:streams-view'
 
-export type StreamsView = 'list' | 'timeline'
+export type StreamsView = 'list' | 'compact' | 'timeline'
 
 /**
- * Persists the user's preferred streams page layout ("list" vs "timeline")
- * in localStorage (issue #149). Defaults to "list" on first render/SSR and
- * hydrates from storage in an effect, matching the pattern in `useShowUsd`.
+ * Persists the user's preferred streams page layout ("list", "compact", or
+ * "timeline") in localStorage (issue #149, #832). Defaults to "list" on first
+ * render/SSR and hydrates from storage in an effect, matching the pattern in
+ * `useShowUsd`.
  */
 export function useStreamsViewPreference(): {
   view: StreamsView
@@ -19,7 +20,7 @@ export function useStreamsViewPreference(): {
 
   useEffect(() => {
     const stored = localStorage.getItem(KEY)
-    if (stored === 'list' || stored === 'timeline') setViewState(stored)
+    if (stored === 'list' || stored === 'compact' || stored === 'timeline') setViewState(stored)
   }, [])
 
   const setView = useCallback((v: StreamsView) => {
