@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { RequireWallet } from '@/components/layout/require-wallet'
 import { WebhookSettings } from '@/components/webhooks/webhook-settings'
+import { AddressBookSettings } from '@/components/settings/address-book-settings'
+import { ClearLocalData } from '@/components/settings/clear-local-data'
 import { UsdToggle } from './usd-toggle'
 
 export const metadata: Metadata = {
@@ -32,6 +34,19 @@ export default function SettingsPage() {
             disable a webhook without deleting it.
           </p>
           <WebhookSettings />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Address Book</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Addresses you save while creating a stream. Rename or remove entries here.
+          </p>
+          <AddressBookSettings />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Danger zone</h2>
+          <ClearLocalData />
         </section>
       </div>
     </RequireWallet>
