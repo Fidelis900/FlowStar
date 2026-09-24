@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { RequireWallet } from '@/components/layout/require-wallet'
 import { WebhookSettings } from '@/components/webhooks/webhook-settings'
+import { NotificationPreferencesSettings } from '@/components/notifications/notification-preferences'
 import { AddressBookSettings } from '@/components/settings/address-book-settings'
 import { ClearLocalData } from '@/components/settings/clear-local-data'
 import { UsdToggle } from './usd-toggle'
@@ -24,6 +25,15 @@ export default function SettingsPage() {
         <section>
           <h2 className="text-lg font-medium mb-4">Display</h2>
           <UsdToggle />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Notifications</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Choose which in-app notification types you want to see. Disabled types are never
+            recorded or shown, including as browser notifications.
+          </p>
+          <NotificationPreferencesSettings />
         </section>
 
         <section>
