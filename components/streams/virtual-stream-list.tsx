@@ -13,6 +13,9 @@ const VIRTUALIZATION_THRESHOLD = 50
 // scrollbar thumb size reasonable on first render. Tweak if your design changes.
 const ESTIMATED_CARD_HEIGHT = 160
 
+// Compact rows are a single line — much shorter than a full card.
+const ESTIMATED_COMPACT_HEIGHT = 48
+
 // Cards to render above and below the visible area. Per the issue spec: 3–5.
 const OVERSCAN_COUNT = 4
 
@@ -24,6 +27,8 @@ interface VirtualStreamListProps {
   selectable?: boolean
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
+  /** Render each row in compact/dense mode (issue #832). */
+  compact?: boolean
   className?: string
 }
 
@@ -33,10 +38,11 @@ function FlatStreamList({
   selectable,
   selectedIds,
   onToggleSelect,
+  compact,
   className = '',
 }: Omit<VirtualStreamListProps, 'loading' | 'skeletonCount'>) {
   return (
-    <div className={`space-y-3 ${className}`} data-testid="stream-list-flat">
+    <div className={`${compact ? 'space-y-1' : 'space-y-3'} ${className}`} data-testid="stream-list-flat">
       {streams.map((s) => (
         <StreamCard
           key={s.id}
@@ -44,6 +50,7 @@ function FlatStreamList({
           selectable={selectable}
           selected={selectedIds?.has(s.id)}
           onToggleSelect={onToggleSelect}
+          compact={compact}
         />
       ))}
     </div>
@@ -56,6 +63,7 @@ function VirtualList({
   selectable,
   selectedIds,
   onToggleSelect,
+  compact,
   className = '',
 }: Omit<VirtualStreamListProps, 'loading' | 'skeletonCount'>) {
   const parentRef = useRef<HTMLDivElement>(null)
@@ -64,12 +72,15 @@ function VirtualList({
   // doesn't invalidate unrelated entries.
   const sizeCache = useRef<Record<string, number>>({})
 
+  const estimatedBase = compact ? ESTIMATED_COMPACT_HEIGHT : ESTIMATED_CARD_HEIGHT
+
   const estimateSize = useCallback(
     (index: number) => {
       const id = streams[index]?.id
-      return id ? (sizeCache.current[id] ?? ESTIMATED_CARD_HEIGHT) : ESTIMATED_CARD_HEIGHT
+      return id ? (sizeCache.current[id] ?? estimatedBase) : estimatedBase
     },
-    [streams],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [streams, estimatedBase],
   )
 
   const virtualizer = useVirtualizer({
@@ -84,6 +95,9 @@ function VirtualList({
 
   const totalHeight = virtualizer.getTotalSize()
   const items = virtualizer.getVirtualItems()
+
+  // Compact rows sit closer together; full cards keep the original 12px gap.
+  const rowGap = compact ? '0.25rem' : '0.75rem'
 
   return (
     <div
@@ -112,8 +126,8 @@ function VirtualList({
                 left: 0,
                 right: 0,
                 transform: `translateY(${virtualRow.start}px)`,
-                // Bottom padding separates cards visually (replaces space-y-3).
-                paddingBottom: '0.75rem',
+                // Bottom padding separates rows visually (replaces space-y-*).
+                paddingBottom: rowGap,
               }}
             >
               <StreamCard
@@ -121,6 +135,7 @@ function VirtualList({
                 selectable={selectable}
                 selected={selectedIds?.has(stream.id)}
                 onToggleSelect={onToggleSelect}
+                compact={compact}
               />
             </div>
           )
@@ -131,11 +146,11 @@ function VirtualList({
 }
 
 // ─── Skeleton list ──────────────────────────────────────────────────────────────
-function SkeletonList({ count }: { count: number }) {
+function SkeletonList({ count, compact }: { count: number; compact?: boolean }) {
   return (
-    <div className="space-y-3" data-testid="stream-list-skeleton">
+    <div className={compact ? 'space-y-1' : 'space-y-3'} data-testid="stream-list-skeleton">
       {Array.from({ length: count }).map((_, i) => (
-        <StreamCardSkeleton key={i} />
+        <StreamCardSkeleton key={i} compact={compact} />
       ))}
     </div>
   )
@@ -149,6 +164,7 @@ function SkeletonList({ count }: { count: number }) {
  * - @tanstack/react-virtual with dynamic row heights for 50+ streams
  * - 4-item overscan buffer above and below the viewport
  * - Falls back to skeletons while loading
+ * - Pass `compact` for the dense single-row layout (issue #832)
  */
 export function VirtualStreamList({
   streams,
@@ -157,13 +173,14 @@ export function VirtualStreamList({
   selectable,
   selectedIds,
   onToggleSelect,
+  compact,
   className,
 }: VirtualStreamListProps) {
   if (loading) {
-    return <SkeletonList count={skeletonCount} />
+    return <SkeletonList count={skeletonCount} compact={compact} />
   }
 
-  const props = { streams, selectable, selectedIds, onToggleSelect, className }
+  const props = { streams, selectable, selectedIds, onToggleSelect, compact, className }
 
   return streams.length >= VIRTUALIZATION_THRESHOLD ? (
     <VirtualList {...props} />

@@ -50,6 +50,8 @@ interface StreamCardProps {
   onToggleSelect?: (id: string) => void
   /** Render in "hidden streams" view — flips Hide/Block actions to Unhide/Unblock. */
   isHiddenView?: boolean
+  /** Compact/dense layout — single-row design for high-density lists (issue #832). */
+  compact?: boolean
 }
 
 function StreamCardInner({
@@ -58,6 +60,7 @@ function StreamCardInner({
   selected,
   onToggleSelect,
   isHiddenView,
+  compact = false,
 }: StreamCardProps) {
   const interval = getInterval(stream)
   const now = useNow(interval)
@@ -123,7 +126,8 @@ function StreamCardInner({
     <Link
       href={`/app/stream/${stream.id}`}
       className={
-        'group relative block rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40 ' +
+        'group relative block rounded-2xl border bg-card transition-colors hover:border-primary/40 ' +
+        (compact ? 'px-3 py-2' : 'p-5') + ' ' +
         (selectable && selected ? 'border-primary' : 'border-border')
       }
       aria-label={ariaLabel}
@@ -141,12 +145,12 @@ function StreamCardInner({
           }}
           aria-label={`Select stream ${stream.id}`}
           data-testid={`stream-card-select-${stream.id}`}
-          className="absolute right-4 top-4 z-10 size-4 accent-primary"
+          className="absolute right-4 top-1/2 z-10 size-4 -translate-y-1/2 accent-primary"
         />
       )}
       {showHideMenu && (
         <div
-          className="absolute right-3 top-3 z-10"
+          className="absolute right-3 top-1/2 z-10 -translate-y-1/2"
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -194,105 +198,168 @@ function StreamCardInner({
           </DropdownMenu>
         </div>
       )}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+
+      {compact ? (
+        /* ── Compact / dense single-row layout (issue #832) ── */
+        <div className="flex items-center gap-3 pr-8">
+          {/* Direction icon — smaller in compact mode */}
           <span
             className={
-              'flex size-9 items-center justify-center rounded-lg ' +
+              'flex size-6 shrink-0 items-center justify-center rounded-md ' +
               (isOutgoing ? 'bg-secondary text-muted-foreground' : 'bg-primary/10 text-primary')
             }
           >
             {isOutgoing ? (
-              <ArrowUpRight className="size-4.5" />
+              <ArrowUpRight className="size-3.5" />
             ) : (
-              <ArrowDownLeft className="size-4.5" />
+              <ArrowDownLeft className="size-3.5" />
             )}
           </span>
-          <div>
-            <p className="text-sm font-medium">
-              {stream.metadata?.name ?? (isOutgoing ? 'Sending to' : 'Receiving from')}
-            </p>
-            <p
-              className="font-mono text-xs text-muted-foreground"
-              title={counterpartyFederationName ? counterparty : undefined}
-            >
-              {counterpartyFederationName ?? shortenAddress(counterparty, 5)}
-            </p>
-          </div>
-        </div>
-        {isCancelling ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-2.5 py-1 text-xs font-medium text-destructive">
-            <span className="size-1.5 animate-pulse rounded-full bg-current" />
-            Cancelling…
-          </span>
-        ) : (
-          <StreamStatusBadge status={status} />
-        )}
-      </div>
 
-      <div className="mt-5 flex items-end justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground">Total</p>
+          {/* Counterparty */}
+          <p
+            className="w-24 shrink-0 truncate font-mono text-xs text-muted-foreground"
+            title={counterpartyFederationName ? counterparty : undefined}
+          >
+            {counterpartyFederationName ?? shortenAddress(counterparty, 4)}
+          </p>
+
+          {/* Amount */}
           <TokenAmount
             amount={stream.depositedAmount}
             token={stream.token}
-            className="text-lg font-semibold"
+            className="shrink-0 text-sm font-semibold tabular-nums"
             maxFractionDigits={2}
           />
-          {/* Issue #675: loading and unavailable previously rendered
-              identically (nothing) — show a distinct skeleton while the
-              price is still being fetched. */}
-          {showUsd && usdValue === null && priceLoading ? (
-            <div className="mt-0.5 h-3 w-12 animate-pulse rounded bg-muted" aria-label="Loading price" />
+
+          {/* Progress bar — slim, fills available width */}
+          <div className="min-w-0 flex-1">
+            <ProgressBar
+              value={progress}
+              marker={withdrawnFrac}
+              indeterminateShimmer={status === 'streaming'}
+            />
+          </div>
+
+          {/* Unlocked % */}
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {(progress * 100).toFixed(0)}%
+          </span>
+
+          {/* Status badge */}
+          {isCancelling ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
+              <span className="size-1.5 animate-pulse rounded-full bg-current" />
+              Cancelling…
+            </span>
           ) : (
-            usdValue !== null && (
-              <p className="text-xs text-muted-foreground">{formatUsd(usdValue)}</p>
-            )
+            <StreamStatusBadge status={status} />
           )}
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">
-            {status === 'scheduled'
-              ? 'Starts in'
-              : status === 'completed' || status === 'cancelled'
-                ? 'Ended'
-                : 'Ends in'}
-          </p>
-          <div className="text-sm font-medium">
-            {status === 'scheduled' ? (
-              <AccessibleCountdownTimer target={stream.startTime} hideButton />
-            ) : status === 'completed' || status === 'cancelled' ? (
-              <span className="text-muted-foreground">—</span>
+      ) : (
+        /* ── Default full-height layout ── */
+        <>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span
+                className={
+                  'flex size-9 items-center justify-center rounded-lg ' +
+                  (isOutgoing ? 'bg-secondary text-muted-foreground' : 'bg-primary/10 text-primary')
+                }
+              >
+                {isOutgoing ? (
+                  <ArrowUpRight className="size-4.5" />
+                ) : (
+                  <ArrowDownLeft className="size-4.5" />
+                )}
+              </span>
+              <div>
+                <p className="text-sm font-medium">
+                  {stream.metadata?.name ?? (isOutgoing ? 'Sending to' : 'Receiving from')}
+                </p>
+                <p
+                  className="font-mono text-xs text-muted-foreground"
+                  title={counterpartyFederationName ? counterparty : undefined}
+                >
+                  {counterpartyFederationName ?? shortenAddress(counterparty, 5)}
+                </p>
+              </div>
+            </div>
+            {isCancelling ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-2.5 py-1 text-xs font-medium text-destructive">
+                <span className="size-1.5 animate-pulse rounded-full bg-current" />
+                Cancelling…
+              </span>
             ) : (
-              <AccessibleCountdownTimer target={stream.endTime} hideButton />
+              <StreamStatusBadge status={status} />
             )}
           </div>
-        </div>
-      </div>
 
-      {(status === 'streaming' || status === 'scheduled') && (
-        <p className="mt-3 text-xs font-mono text-muted-foreground">{rate.best}</p>
+          <div className="mt-5 flex items-end justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <TokenAmount
+                amount={stream.depositedAmount}
+                token={stream.token}
+                className="text-lg font-semibold"
+                maxFractionDigits={2}
+              />
+              {/* Issue #675: loading and unavailable previously rendered
+                  identically (nothing) — show a distinct skeleton while the
+                  price is still being fetched. */}
+              {showUsd && usdValue === null && priceLoading ? (
+                <div className="mt-0.5 h-3 w-12 animate-pulse rounded bg-muted" aria-label="Loading price" />
+              ) : (
+                usdValue !== null && (
+                  <p className="text-xs text-muted-foreground">{formatUsd(usdValue)}</p>
+                )
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">
+                {status === 'scheduled'
+                  ? 'Starts in'
+                  : status === 'completed' || status === 'cancelled'
+                    ? 'Ended'
+                    : 'Ends in'}
+              </p>
+              <div className="text-sm font-medium">
+                {status === 'scheduled' ? (
+                  <AccessibleCountdownTimer target={stream.startTime} hideButton />
+                ) : status === 'completed' || status === 'cancelled' ? (
+                  <span className="text-muted-foreground">—</span>
+                ) : (
+                  <AccessibleCountdownTimer target={stream.endTime} hideButton />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {(status === 'streaming' || status === 'scheduled') && (
+            <p className="mt-3 text-xs font-mono text-muted-foreground">{rate.best}</p>
+          )}
+
+          <div className="mt-4">
+            <ProgressBar
+              value={progress}
+              marker={withdrawnFrac}
+              indeterminateShimmer={status === 'streaming'}
+            />
+            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+              <span>{(progress * 100).toFixed(1)}% unlocked</span>
+              <span>
+                <TokenAmount
+                  amount={stream.withdrawnAmount}
+                  token={stream.token}
+                  showSymbol={false}
+                  maxFractionDigits={2}
+                />{' '}
+                withdrawn
+              </span>
+            </div>
+          </div>
+        </>
       )}
-
-      <div className="mt-4">
-        <ProgressBar
-          value={progress}
-          marker={withdrawnFrac}
-          indeterminateShimmer={status === 'streaming'}
-        />
-        <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-          <span>{(progress * 100).toFixed(1)}% unlocked</span>
-          <span>
-            <TokenAmount
-              amount={stream.withdrawnAmount}
-              token={stream.token}
-              showSymbol={false}
-              maxFractionDigits={2}
-            />{' '}
-            withdrawn
-          </span>
-        </div>
-      </div>
     </Link>
   )
 }
@@ -301,7 +368,20 @@ export const StreamCard = memo(StreamCardInner)
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
-export function StreamCardSkeleton() {
+export function StreamCardSkeleton({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="flex animate-pulse items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2">
+        <div className="size-6 shrink-0 rounded-md bg-muted" />
+        <div className="h-3 w-24 shrink-0 rounded bg-muted" />
+        <div className="h-4 w-16 shrink-0 rounded bg-muted" />
+        <div className="h-2 min-w-0 flex-1 rounded-full bg-muted" />
+        <div className="h-3 w-8 shrink-0 rounded bg-muted" />
+        <div className="h-5 w-16 shrink-0 rounded-full bg-muted" />
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 animate-pulse">
       <div className="flex items-start justify-between gap-3">

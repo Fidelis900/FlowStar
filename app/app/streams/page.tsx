@@ -13,6 +13,7 @@ import {
   Eye,
   LayoutList,
   GanttChartSquare,
+  Rows3,
   Archive,
 } from 'lucide-react'
 import { RequireWallet } from '@/components/layout/require-wallet'
@@ -285,7 +286,7 @@ function StreamsPage() {
         ) : (
           <>
             <div className="flex items-center gap-2">
-              {/* List / Timeline view toggle */}
+              {/* List / Compact / Timeline view toggle */}
               <div className="flex items-center rounded-lg border border-border p-0.5">
                 <button
                   type="button"
@@ -301,6 +302,21 @@ function StreamsPage() {
                 >
                   <LayoutList className="size-3.5" />
                   <span className="hidden sm:inline">List</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('compact')}
+                  aria-pressed={view === 'compact'}
+                  aria-label="Compact view"
+                  className={
+                    'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ' +
+                    (view === 'compact'
+                      ? 'bg-secondary text-foreground'
+                      : 'text-muted-foreground hover:text-foreground')
+                  }
+                >
+                  <Rows3 className="size-3.5" />
+                  <span className="hidden sm:inline">Compact</span>
                 </button>
                 <button
                   type="button"
@@ -482,6 +498,7 @@ function StreamsPage() {
                 selectable={selectMode}
                 selectedIds={selected}
                 onToggleSelect={toggle}
+                compact={view === 'compact'}
               />
             )}
           </>
