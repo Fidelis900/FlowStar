@@ -28,6 +28,39 @@ Every delivery is a `POST` with a JSON body of this shape:
 
 The **Send test** action on a registered webhook delivers a `stream.created` payload with `data: { "stream_id": 0, "note": "FlowStar webhook test" }`.
 
+## Verifying deliveries
+
+Every delivery includes an `X-FlowStar-Signature` header so your endpoint can
+confirm it genuinely came from this browser's FlowStar instance and the body
+wasn't tampered with in transit:
+
+```
+X-FlowStar-Signature: sha256=<hex-encoded HMAC-SHA256>
+```
+
+The signature is an HMAC-SHA256 of the **raw request body bytes** (the exact
+JSON string sent, before any re-parsing), keyed by the secret generated for
+that webhook at registration time (shown once in **Settings → Webhooks** when
+you add the webhook — store it, it is not retrievable afterward from the UI).
+
+To verify (Node.js example):
+
+```js
+const crypto = require('node:crypto')
+
+function verifyFlowStarSignature(rawBody, signatureHeader, secret) {
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+  return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected))
+}
+```
+
+Important:
+
+- Verify against the **raw body bytes**, not `JSON.stringify(JSON.parse(rawBody))` — re-serializing can change key order or whitespace and produce a different signature than what was actually sent.
+- Compare in constant time (`crypto.timingSafeEqual` or equivalent) rather than `===`, to avoid a timing side-channel.
+- Each webhook has its own independently generated secret — a signature computed with one webhook's secret will not validate against another's.
+- There is no request replay protection (no nonce/timestamp-window check) beyond the `timestamp` field in the payload itself — if replay protection matters for your integration, reject deliveries whose `timestamp` is older than a window you choose.
+
 ## Event types
 
 | Event                | Meaning                            |
