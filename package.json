@@ -20,7 +20,7 @@
   "dependencies": {
     "@albedo-link/intent": "^0.13.0",
     "@base-ui/react": "^1.5.0",
-    "@sentry/nextjs": "^8.0.0",
+    "@sentry/nextjs": "^10.75.3",
     "@stellar/freighter-api": "^6.0.1",
     "@stellar/stellar-sdk": "^17.1.0",
     "@tanstack/react-virtual": "^3.14.10",
