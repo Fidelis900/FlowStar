@@ -265,10 +265,10 @@ export default function BatchCreatePage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
+            <Button variant="outline" nativeButton={false} asChild>
               <Link href="/app">Return to dashboard</Link>
             </Button>
-            <Button variant="secondary" asChild>
+            <Button variant="secondary" nativeButton={false} asChild>
               <Link href="/app/create">Single stream</Link>
             </Button>
           </div>
@@ -452,7 +452,7 @@ export default function BatchCreatePage() {
                   )}
                   {executing ? 'Executing…' : 'Execute batch'}
                 </Button>
-                <Button type="button" variant="outline" asChild>
+                <Button type="button" variant="outline" nativeButton={false} asChild>
                   <Link href="/app/create">Review single stream</Link>
                 </Button>
               </div>

@@ -199,7 +199,7 @@ export function WebhookSettings() {
               Register a webhook above to start receiving real-time event notifications for your
               streams.
             </p>
-            <Button asChild className="mt-5 gap-1.5">
+            <Button nativeButton={false} asChild className="mt-5 gap-1.5">
               <a href="#register-webhook">
                 <Plus className="size-4" />
                 Register your first webhook
