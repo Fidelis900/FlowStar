@@ -270,6 +270,11 @@ export default function BatchCreatePage() {
             </Button>
             <Button variant="secondary" asChild>
               <Link href="/app/create">{batchCreateCopy.singleStream}</Link>
+            <Button variant="outline" nativeButton={false} asChild>
+              <Link href="/app">Return to dashboard</Link>
+            </Button>
+            <Button variant="secondary" nativeButton={false} asChild>
+              <Link href="/app/create">Single stream</Link>
             </Button>
           </div>
         </div>
@@ -452,6 +457,8 @@ export default function BatchCreatePage() {
                 </Button>
                 <Button type="button" variant="outline" asChild>
                   <Link href="/app/create">{batchCreateCopy.execution.reviewSingleStream}</Link>
+                <Button type="button" variant="outline" nativeButton={false} asChild>
+                  <Link href="/app/create">Review single stream</Link>
                 </Button>
               </div>
             </div>

@@ -108,7 +108,7 @@ export function Dashboard() {
                 </span>
               </Button>
             )}
-            <Button size="sm" asChild>
+            <Button size="sm" nativeButton={false} asChild>
               <Link href="/app/create">
                 <Plus className="mr-2 h-4 w-4" />
                 New stream

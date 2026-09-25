@@ -198,7 +198,7 @@ export function WebhookSettings() {
             <p className="mt-1 max-w-xs text-sm text-muted-foreground text-pretty">
               {settingsCopy.webhooks.registered.emptyDescription}
             </p>
-            <Button asChild className="mt-5 gap-1.5">
+            <Button nativeButton={false} asChild className="mt-5 gap-1.5">
               <a href="#register-webhook">
                 <Plus className="size-4" />
                 {settingsCopy.webhooks.registered.emptyButton}
